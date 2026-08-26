@@ -3,66 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>AI 名單中心 Demo</title>
+<title>AI 開發戰情室</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{
-  --bg:#f5f7fb;--panel:#fff;--line:#e6eaf0;--text:#172033;--muted:#6b7280;
-  --primary:#2563eb;--nav:#111827;--green:#16a34a;--orange:#ea580c;--red:#dc2626;
-  --purple:#7c3aed;--shadow:0 8px 24px rgba(15,23,42,.06)
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:"Noto Sans TC","Microsoft JhengHei",Arial,sans-serif;background:var(--bg);color:var(--text)}
-button,input,select{font:inherit}
-.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
-.sidebar{background:linear-gradient(180deg,#111827,#16243a);color:#fff;padding:22px 16px;position:sticky;top:0;height:100vh}
-.brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;margin-bottom:28px}
-.logo{width:34px;height:34px;border-radius:10px;background:#2563eb;display:grid;place-items:center}
-.nav-title{font-size:12px;color:#94a3b8;margin:14px 8px 8px}
-.nav-item{padding:11px 12px;border-radius:10px;margin:4px 0;color:#dbeafe}
-.nav-item.active{background:#1d4ed8;color:#fff}
-.main{padding:26px}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-.topbar h1{margin:0 0 4px;font-size:28px}
-.topbar p{margin:0;color:var(--muted)}
-.actions{display:flex;gap:10px}
-.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
-.btn-primary{background:var(--primary);color:#fff}
-.btn-light{background:#fff;border:1px solid var(--line);color:var(--text)}
-.btn-success{background:#dcfce7;color:#166534}
-.btn-danger{background:#fee2e2;color:#991b1b}
-.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
-.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
-.kpi .label{font-size:13px;color:var(--muted)}
-.kpi .num{font-size:28px;font-weight:800;margin-top:4px}
-.panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
-.panel-head{display:flex;justify-content:space-between;align-items:center;padding:15px 16px;border-bottom:1px solid var(--line)}
-.panel-head h3{margin:0}
-.filters{display:flex;gap:8px;flex-wrap:wrap}
-.filters input,.filters select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#fff}
-.table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse;min-width:1150px}
-th,td{padding:13px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-size:13px}
-th{background:#f8fafc;color:#475569;font-size:12px;position:sticky;top:0}
-.company{font-weight:800;font-size:14px;margin-bottom:4px}
-.meta{color:var(--muted);font-size:12px;line-height:1.5}
-.tag{display:inline-block;font-size:11px;padding:4px 7px;border-radius:999px;margin:2px 3px 2px 0}
-.erp{background:#dbeafe;color:#1d4ed8}.ai{background:#f3e8ff;color:#7e22ce}.api{background:#ffedd5;color:#c2410c}.bi{background:#ccfbf1;color:#0f766e}
-.score{font-weight:800;font-size:17px}
-.score.high{color:#15803d}.score.mid{color:#c2410c}.score.low{color:#b91c1c}
-.reason{max-width:320px;line-height:1.55}
-.source{max-width:230px;line-height:1.55}
-.status{display:inline-block;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:800}
-.pending{background:#fff7ed;color:#c2410c}.accepted{background:#dcfce7;color:#166534}.rejected{background:#fee2e2;color:#991b1b}
-.row-actions{display:flex;gap:6px;flex-wrap:wrap}
-.note{background:#eef2ff;color:#3730a3;border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.45}
-.empty{padding:30px;text-align:center;color:var(--muted)}
-.toast{position:fixed;right:24px;bottom:24px;background:#111827;color:white;padding:12px 16px;border-radius:10px;opacity:0;transform:translateY(8px);transition:.2s}
-.toast.show{opacity:1;transform:translateY(0)}
-@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.app{grid-template-columns:1fr}.sidebar{display:none}}
+:root{--bg:#f5f7fb;--panel:#fff;--line:#e6eaf0;--text:#172033;--muted:#6b7280;--primary:#2563eb;--nav:#111827;--green:#16a34a;--red:#dc2626;--shadow:0 8px 24px rgba(15,23,42,.06)}
+*{box-sizing:border-box} body{margin:0;font-family:"Noto Sans TC","Microsoft JhengHei",Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}.hidden{display:none!important}
+.login-page{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#f8fafc,#eef2ff)}
+.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 70px rgba(15,23,42,.12);padding:30px}
+.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:24px}.login-logo,.logo{width:40px;height:40px;border-radius:12px;background:#2563eb;color:white;display:grid;place-items:center;font-weight:900}
+.login-card h1{margin:0;font-size:24px}.login-card p{margin:6px 0 22px;color:var(--muted)}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+.field input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px}.login-error{min-height:20px;color:#b91c1c;font-size:13px;margin:8px 0}
+.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}.sidebar{background:linear-gradient(180deg,#111827,#16243a);color:#fff;padding:22px 16px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;margin-bottom:28px}.logo{width:34px;height:34px;border-radius:10px}
+.nav-title{font-size:12px;color:#94a3b8;margin:14px 8px 8px}.nav-item{padding:11px 12px;border-radius:10px;margin:4px 0;color:#dbeafe}.nav-item.active{background:#1d4ed8;color:#fff}
+.main{padding:26px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}.topbar h1{margin:0 0 4px;font-size:28px}.topbar p{margin:0;color:var(--muted)}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.user-badge{font-size:12px;color:#475569;background:#fff;border:1px solid var(--line);padding:9px 11px;border-radius:10px}
+.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}.btn:disabled{opacity:.55;cursor:not-allowed}.btn-primary{background:var(--primary);color:#fff}.btn-light{background:#fff;border:1px solid var(--line);color:var(--text)}.btn-success{background:#dcfce7;color:#166534}.btn-danger{background:#fee2e2;color:#991b1b}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}.kpi .label{font-size:13px;color:var(--muted)}.kpi .num{font-size:28px;font-weight:800;margin-top:4px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;border-bottom:1px solid var(--line)}.panel-head h3{margin:0}.filters{display:flex;gap:8px;flex-wrap:wrap}.filters input,.filters select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#fff}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1150px}th,td{padding:13px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left;font-size:13px}th{background:#f8fafc;color:#475569;font-size:12px;position:sticky;top:0}
+.company{font-weight:800;font-size:14px;margin-bottom:4px}.meta{color:var(--muted);font-size:12px;line-height:1.5}.tag{display:inline-block;font-size:11px;padding:4px 7px;border-radius:999px;margin:2px 3px 2px 0}.erp{background:#dbeafe;color:#1d4ed8}.ai{background:#f3e8ff;color:#7e22ce}.api{background:#ffedd5;color:#c2410c}.bi{background:#ccfbf1;color:#0f766e}
+.score{font-weight:800;font-size:17px}.score.high{color:#15803d}.score.mid{color:#c2410c}.score.low{color:#b91c1c}.reason{max-width:320px;line-height:1.55}.source{max-width:230px;line-height:1.55}.status{display:inline-block;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:800;white-space:nowrap}
+.pending{background:#fff7ed;color:#c2410c}.waiting,.accepted{background:#dbeafe;color:#1d4ed8}.contacted{background:#e0f2fe;color:#0369a1}.hot{background:#fee2e2;color:#b91c1c}.follow{background:#f3e8ff;color:#7e22ce}.closed{background:#dcfce7;color:#166534}.rejected{background:#f1f5f9;color:#475569}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap}.note{background:#eef2ff;color:#3730a3;border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.45}.empty,.loading{padding:30px;text-align:center;color:var(--muted)}
+.toast{position:fixed;right:24px;bottom:24px;background:#111827;color:white;padding:12px 16px;border-radius:10px;opacity:0;transform:translateY(8px);transition:.2s;z-index:999}.toast.show{opacity:1;transform:translateY(0)}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.app{grid-template-columns:1fr}.sidebar{display:none}.topbar{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
 <body>
-<div class="app">
+<section id="loginPage" class="login-page">
+  <div class="login-card">
+    <div class="login-brand"><div class="login-logo">AI</div><div><h1>開發戰情室</h1><p>請使用內部帳號登入</p></div></div>
+    <form id="loginForm">
+      <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" required></div>
+      <div class="field"><label>密碼</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
+      <div id="loginError" class="login-error"></div>
+      <button id="loginBtn" class="btn btn-primary" style="width:100%" type="submit">登入</button>
+    </form>
+  </div>
+</section>
+
+<div id="app" class="app hidden">
   <aside class="sidebar">
     <div class="brand"><div class="logo">AI</div>開發戰情室</div>
     <div class="nav-title">主選單</div>
@@ -80,213 +62,114 @@ th{background:#f8fafc;color:#475569;font-size:12px;position:sticky;top:0}
 
   <main class="main">
     <div class="topbar">
-      <div>
-        <h1>AI 名單中心</h1>
-        <p>自動彙整公開訊號，先由 AI 評估，再決定是否進入待聯繫。</p>
-      </div>
-      <div class="actions">
-        <button class="btn btn-light" onclick="resetDemo()">重置 Demo</button>
-        <button class="btn btn-primary" onclick="simulateAI()">＋ 模擬 AI 匯入</button>
-      </div>
+      <div><h1>AI 名單中心</h1><p>資料直接讀取 Supabase 雲端商機資料庫。</p></div>
+      <div class="actions"><span id="userEmail" class="user-badge"></span><button class="btn btn-light" onclick="loadLeads()">↻ 重新整理</button><button class="btn btn-light" onclick="logout()">登出</button></div>
     </div>
 
     <section class="kpis" id="kpis"></section>
 
     <section class="panel">
       <div class="panel-head">
-        <h3>AI 待審核名單</h3>
+        <h3>AI 開發名單</h3>
         <div class="filters">
           <input id="search" placeholder="搜尋公司名稱" oninput="render()">
-          <select id="typeFilter" onchange="render()">
-            <option value="">全部類型</option>
-            <option value="ERP">ERP</option>
-            <option value="AI">AI</option>
-            <option value="戰情室">戰情室</option>
-            <option value="API串接">API串接</option>
-            <option value="MES串接">MES串接</option>
-          </select>
-          <select id="scoreFilter" onchange="render()">
-            <option value="">全部分數</option>
-            <option value="80">80 分以上</option>
-            <option value="70">70 分以上</option>
-            <option value="50">50 分以上</option>
-          </select>
-          <select id="statusFilter" onchange="render()">
-            <option value="">全部狀態</option>
-            <option value="pending">待審核</option>
-            <option value="accepted">已加入待聯繫</option>
-            <option value="rejected">已排除</option>
-          </select>
+          <select id="typeFilter" onchange="render()"><option value="">全部類型</option><option value="ERP">ERP</option><option value="AI">AI</option><option value="戰情室">戰情室</option><option value="API串接">API串接</option><option value="MES串接">MES串接</option></select>
+          <select id="scoreFilter" onchange="render()"><option value="">全部分數</option><option value="80">80 分以上</option><option value="70">70 分以上</option><option value="50">50 分以上</option></select>
+          <select id="statusFilter" onchange="render()"><option value="">全部狀態</option><option value="pending">AI 待審核</option><option value="waiting">待聯繫</option><option value="contacted">已接觸</option><option value="hot">有需求</option><option value="follow">待追蹤</option><option value="closed">已結案</option><option value="rejected">已排除</option></select>
         </div>
       </div>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th>公司</th>
-              <th>商機類型</th>
-              <th>AI 分數</th>
-              <th>AI 判斷理由</th>
-              <th>原始來源</th>
-              <th>建議</th>
-              <th>狀態</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
+          <thead><tr><th>公司</th><th>商機類型</th><th>AI 分數</th><th>AI 判斷理由</th><th>原始來源</th><th>建議</th><th>狀態</th><th>操作</th></tr></thead>
+          <tbody id="tbody"><tr><td colspan="8"><div class="loading">載入中...</div></td></tr></tbody>
         </table>
       </div>
     </section>
   </main>
 </div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-const seed = [
-  {
-    id:1, company:'XX精密股份有限公司', city:'台中市', industry:'精密機械',
-    types:['ERP','MES串接'], score:91,
-    reason:'近期同時招募 ERP 專案管理師與 MES 工程師，且公開資訊顯示有新產線擴建。',
-    source:'104 徵才 + 公司官網新聞',
-    suggestion:'優先聯繫資訊主管，主打 ERP 汰換與 MES 串接。',
-    status:'pending'
-  },
-  {
-    id:2, company:'OO生技股份有限公司', city:'新竹縣', industry:'生技製造',
-    types:['ERP','戰情室'], score:86,
-    reason:'近期新增倉儲與資訊職缺，並強調批號、效期與數據追蹤需求。',
-    source:'公司徵才頁 + 官網',
-    suggestion:'可切入批號效期、先進先出與管理戰情室。',
-    status:'pending'
-  },
-  {
-    id:3, company:'AA貿易有限公司', city:'台北市', industry:'進出口貿易',
-    types:['API串接','AI'], score:74,
-    reason:'正在招募電商營運與系統整合人員，官網已使用多通路購物平台。',
-    source:'LinkedIn 公開職缺 + 官網',
-    suggestion:'先詢問 Shopline / momo / 蝦皮串接需求。',
-    status:'pending'
-  },
-  {
-    id:4, company:'BB工業股份有限公司', city:'彰化縣', industry:'金屬加工',
-    types:['ERP'], score:58,
-    reason:'有 ERP 工程師職缺，但職缺內容主要為既有系統維護。',
-    source:'104 徵才',
-    suggestion:'優先度低，建議先人工確認是否有汰換計畫。',
-    status:'pending'
-  },
-  {
-    id:5, company:'CC電子股份有限公司', city:'桃園市', industry:'電子製造',
-    types:['ERP','AI','戰情室'], score:94,
-    reason:'近期公開提及智慧製造、數位轉型與新廠建置，並新增 BI 與資料工程相關職缺。',
-    source:'新聞稿 + 公司官網 + 徵才資訊',
-    suggestion:'高優先，建議以 ERP＋AI＋戰情室整合提案切入。',
-    status:'accepted'
-  },
-  {
-    id:6, company:'DD有限公司', city:'台南市', industry:'一般買賣',
-    types:['ERP'], score:42,
-    reason:'僅出現一般 MIS 維護職缺，沒有明確導入或擴建訊號。',
-    source:'1111 人力銀行',
-    suggestion:'不建議投入開發資源。',
-    status:'rejected'
-  }
-];
-let leads = JSON.parse(localStorage.getItem('ai_lead_center')||'null') || seed;
+const SUPABASE_URL = 'https://xxkkqsthotnovspkmrhe.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_NXgVHeky_268L-qbe4qyiw_1bBBqTmC';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function save(){localStorage.setItem('ai_lead_center',JSON.stringify(leads))}
-function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function tagClass(t){if(t.includes('ERP'))return 'erp';if(t.includes('AI'))return 'ai';if(t.includes('API')||t.includes('MES'))return 'api';return 'bi'}
-function scoreClass(s){return s>=80?'high':s>=60?'mid':'low'}
-function statusText(s){return s==='pending'?'待審核':s==='accepted'?'已加入待聯繫':'已排除'}
-function statusClass(s){return s}
+let leads = [];
+let currentUser = null;
+
+function esc(s=''){return String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function parseTypes(value=''){if(Array.isArray(value))return value;return String(value||'').split(/[,+、/|]/).map(x=>x.trim()).filter(Boolean)}
+function tagClass(t){if(t.includes('ERP'))return'erp';if(t.includes('AI'))return'ai';if(t.includes('API')||t.includes('MES'))return'api';return'bi'}
+function scoreClass(s){const n=Number(s||0);return n>=80?'high':n>=60?'mid':'low'}
+function normalizeStatus(s){return s==='accepted'?'waiting':(s||'pending')}
+function statusText(s){return({pending:'AI 待審核',waiting:'待聯繫',contacted:'已接觸',hot:'有需求',follow:'待追蹤',closed:'已結案',rejected:'已排除'})[normalizeStatus(s)]||s}
+function statusClass(s){return normalizeStatus(s)}
+function suggestionFor(x){const t=x.types||[];if(t.some(v=>v.includes('MES')))return'建議先確認現有 ERP、生管流程與 MES 串接需求。';if(t.some(v=>v.includes('API')))return'建議先確認目前使用的平台、API 開放狀況及希望自動化的流程。';if(t.some(v=>v.includes('戰情室')||v.includes('AI')))return'建議切入管理報表、即時資訊與 AI 應用情境。';if(t.some(v=>v.includes('ERP')))return'建議先確認現有 ERP 使用年限、痛點及是否有汰換規劃。';return'建議先電話確認目前資訊系統現況與近期數位化計畫。'}
+function mapRow(r){return{id:r.id,company:r.company_name||'',city:r.city||'',industry:r.industry||'',types:parseTypes(r.opportunity_type),score:Number(r.ai_score||0),reason:r.ai_reason||'',source:r.source||'',sourceUrl:r.source_url||'',status:normalizeStatus(r.status),owner:r.owner||'',nextFollowupAt:r.next_followup_at||'',closeReason:r.close_reason||''}}
+
+async function loadLeads(){
+  if(!currentUser)return;
+  document.getElementById('tbody').innerHTML='<tr><td colspan="8"><div class="loading">正在讀取 Supabase...</div></td></tr>';
+  const {data,error}=await db.from('leads').select('*').order('ai_score',{ascending:false}).order('created_at',{ascending:false});
+  if(error){console.error(error);document.getElementById('tbody').innerHTML=`<tr><td colspan="8"><div class="empty">讀取資料失敗：${esc(error.message)}</div></td></tr>`;toast('讀取 Supabase 失敗');return}
+  leads=(data||[]).map(mapRow);render();
+}
 
 function render(){
   const q=document.getElementById('search').value.trim().toLowerCase();
   const type=document.getElementById('typeFilter').value;
   const minScore=Number(document.getElementById('scoreFilter').value||0);
   const st=document.getElementById('statusFilter').value;
+  const rows=leads.filter(x=>(!q||x.company.toLowerCase().includes(q))&&(!type||x.types.includes(type))&&x.score>=minScore&&(!st||x.status===st)).sort((a,b)=>b.score-a.score);
 
-  let rows=leads.filter(x=>
-    (!q || x.company.toLowerCase().includes(q)) &&
-    (!type || x.types.includes(type)) &&
-    x.score>=minScore &&
-    (!st || x.status===st)
-  ).sort((a,b)=>b.score-a.score);
+  document.getElementById('tbody').innerHTML=rows.length?rows.map(x=>`
+  <tr>
+    <td><div class="company">${esc(x.company)}</div><div class="meta">${esc(x.city)}｜${esc(x.industry)}</div>${x.owner?`<div class="meta">負責：${esc(x.owner)}</div>`:''}</td>
+    <td>${x.types.length?x.types.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join(''):'<span class="meta">未分類</span>'}</td>
+    <td><span class="score ${scoreClass(x.score)}">${x.score}</span></td>
+    <td><div class="reason">${esc(x.reason)}</div></td>
+    <td><div class="source">${esc(x.source)}</div>${x.sourceUrl?`<div class="meta"><a href="${esc(x.sourceUrl)}" target="_blank" rel="noopener">查看來源</a></div>`:''}</td>
+    <td><div class="note">${esc(suggestionFor(x))}</div></td>
+    <td><span class="status ${statusClass(x.status)}">${statusText(x.status)}</span></td>
+    <td><div class="row-actions">${x.status!=='waiting'?`<button class="btn btn-success" onclick="updateLeadStatus(${x.id},'waiting')">加入待聯繫</button>`:''}${x.status!=='rejected'?`<button class="btn btn-danger" onclick="updateLeadStatus(${x.id},'rejected')">排除</button>`:''}</div></td>
+  </tr>`).join(''):'<tr><td colspan="8"><div class="empty">目前沒有符合條件的名單</div></td></tr>';
 
-  document.getElementById('tbody').innerHTML = rows.length ? rows.map(x=>`
-    <tr>
-      <td>
-        <div class="company">${esc(x.company)}</div>
-        <div class="meta">${esc(x.city)}｜${esc(x.industry)}</div>
-      </td>
-      <td>${x.types.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</td>
-      <td><span class="score ${scoreClass(x.score)}">${x.score}</span></td>
-      <td><div class="reason">${esc(x.reason)}</div></td>
-      <td><div class="source">${esc(x.source)}</div></td>
-      <td><div class="note">${esc(x.suggestion)}</div></td>
-      <td><span class="status ${statusClass(x.status)}">${statusText(x.status)}</span></td>
-      <td>
-        <div class="row-actions">
-          <button class="btn btn-success" onclick="acceptLead(${x.id})">加入待聯繫</button>
-          <button class="btn btn-danger" onclick="rejectLead(${x.id})">排除</button>
-        </div>
-      </td>
-    </tr>`).join('') : `<tr><td colspan="8"><div class="empty">目前沒有符合條件的名單</div></td></tr>`;
-
-  const total=leads.length;
-  const pending=leads.filter(x=>x.status==='pending').length;
-  const accepted=leads.filter(x=>x.status==='accepted').length;
-  const high=leads.filter(x=>x.score>=80).length;
-  const rejected=leads.filter(x=>x.status==='rejected').length;
-  const data=[['AI 匯入總數',total],['待審核',pending],['80 分以上',high],['待聯繫',accepted],['已排除',rejected]];
+  const total=leads.length,pending=leads.filter(x=>x.status==='pending').length,waiting=leads.filter(x=>x.status==='waiting').length,high=leads.filter(x=>x.score>=80).length,rejected=leads.filter(x=>x.status==='rejected').length;
+  const data=[['AI 匯入總數',total],['待審核',pending],['80 分以上',high],['待聯繫',waiting],['已排除',rejected]];
   document.getElementById('kpis').innerHTML=data.map(([a,b])=>`<div class="kpi"><div class="label">${a}</div><div class="num">${b}</div></div>`).join('');
 }
 
-function acceptLead(id){
-  const x=leads.find(i=>i.id===id); if(!x)return;
-  x.status='accepted'; save(); render(); toast('已加入待聯繫名單');
+async function updateLeadStatus(id,status){
+  const {error}=await db.from('leads').update({status}).eq('id',id);
+  if(error){console.error(error);toast(error.message.toLowerCase().includes('row-level security')?'目前尚未開放 UPDATE 權限，下一步設定 RLS':'更新失敗：'+error.message);return}
+  const x=leads.find(v=>v.id===id);if(x)x.status=status;render();toast(status==='waiting'?'已加入待聯繫名單':'已排除名單');
 }
-function rejectLead(id){
-  const x=leads.find(i=>i.id===id); if(!x)return;
-  x.status='rejected'; save(); render(); toast('已排除名單');
+
+async function logout(){await db.auth.signOut();currentUser=null;leads=[];showLogin()}
+function showLogin(){document.getElementById('loginPage').classList.remove('hidden');document.getElementById('app').classList.add('hidden');document.getElementById('loginPassword').value=''}
+function showApp(){document.getElementById('loginPage').classList.add('hidden');document.getElementById('app').classList.remove('hidden');document.getElementById('userEmail').textContent=currentUser?.email?'登入：'+currentUser.email:''}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200)}
+
+document.getElementById('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value,errorBox=document.getElementById('loginError'),btn=document.getElementById('loginBtn');
+  errorBox.textContent='';btn.disabled=true;btn.textContent='登入中...';
+  try{
+    const {data,error}=await db.auth.signInWithPassword({email,password});
+    if(error)throw error;
+    currentUser=data.user;showApp();await loadLeads();
+  }catch(err){console.error(err);errorBox.textContent='登入失敗，請確認 Email 與密碼。'}
+  finally{btn.disabled=false;btn.textContent='登入'}
+});
+
+async function init(){
+  const {data,error}=await db.auth.getSession();
+  if(error||!data.session?.user){showLogin();return}
+  currentUser=data.session.user;showApp();await loadLeads();
 }
-function simulateAI(){
-  const pool=[
-    {
-      company:'新曜機械股份有限公司',city:'台中市',industry:'機械製造',
-      types:['ERP','MES串接'],score:89,
-      reason:'近期新設廠區並招募資訊整合與生產系統人員。',
-      source:'公開新聞 + 徵才資訊',
-      suggestion:'建議切入 ERP、生管與 MES 串接需求。'
-    },
-    {
-      company:'安禾生醫股份有限公司',city:'新北市',industry:'生醫保健',
-      types:['ERP','戰情室'],score:84,
-      reason:'職缺內容涉及批號、效期、倉儲與管理報表。',
-      source:'公司官網 + 公開職缺',
-      suggestion:'主打批號效期、先進先出與管理報表。'
-    },
-    {
-      company:'鉅星貿易有限公司',city:'台北市',industry:'電商貿易',
-      types:['API串接','AI'],score:79,
-      reason:'近期拓展多平台電商並招募系統整合相關職缺。',
-      source:'官網 + 公開徵才',
-      suggestion:'先確認電商平台與 API 串接現況。'
-    }
-  ];
-  const item=pool[Math.floor(Math.random()*pool.length)];
-  leads.unshift({id:Date.now(),...item,status:'pending'});
-  save(); render(); toast('AI 已模擬匯入 1 筆新名單');
-}
-function resetDemo(){
-  leads=JSON.parse(JSON.stringify(seed)); save(); render(); toast('Demo 已重置');
-}
-function toast(msg){
-  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),1600)
-}
-render();
+db.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT'){currentUser=null;showLogin()}});
+init();
 </script>
 </body>
 </html>
