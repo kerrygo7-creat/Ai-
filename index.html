@@ -16,7 +16,7 @@ button,input,select{font:inherit}.hidden{display:none!important}
 .field input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px}.login-error{min-height:20px;color:#b91c1c;font-size:13px;margin:8px 0}
 .app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}.sidebar{background:linear-gradient(180deg,#111827,#16243a);color:#fff;padding:22px 16px;position:sticky;top:0;height:100vh}
 .brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800;margin-bottom:28px}.logo{width:34px;height:34px;border-radius:10px}
-.nav-title{font-size:12px;color:#94a3b8;margin:14px 8px 8px}.nav-item{padding:11px 12px;border-radius:10px;margin:4px 0;color:#dbeafe}.nav-item.active{background:#1d4ed8;color:#fff}
+.nav-title{font-size:12px;color:#94a3b8;margin:14px 8px 8px}.nav-item{padding:11px 12px;border-radius:10px;margin:4px 0;color:#dbeafe;cursor:pointer;user-select:none}.nav-item:hover{background:rgba(255,255,255,.07)}.nav-item.active{background:#1d4ed8;color:#fff}
 .main{padding:26px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}.topbar h1{margin:0 0 4px;font-size:28px}.topbar p{margin:0;color:var(--muted)}
 .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.user-badge{font-size:12px;color:#475569;background:#fff;border:1px solid var(--line);padding:9px 11px;border-radius:10px}
 .btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}.btn:disabled{opacity:.55;cursor:not-allowed}.btn-primary{background:var(--primary);color:#fff}.btn-light{background:#fff;border:1px solid var(--line);color:var(--text)}.btn-success{background:#dcfce7;color:#166534}.btn-danger{background:#fee2e2;color:#991b1b}
@@ -48,12 +48,12 @@ button,input,select{font:inherit}.hidden{display:none!important}
   <aside class="sidebar">
     <div class="brand"><div class="logo">AI</div>開發戰情室</div>
     <div class="nav-title">主選單</div>
-    <div class="nav-item">🏠 首頁儀表板</div>
-    <div class="nav-item active">✨ AI 名單中心</div>
-    <div class="nav-item">📞 待聯繫名單</div>
-    <div class="nav-item">🔥 有效商機</div>
-    <div class="nav-item">📅 待追蹤</div>
-    <div class="nav-item">✅ 已結案</div>
+    <div class="nav-item" data-view="dashboard" onclick="changeView('dashboard')">🏠 首頁儀表板</div>
+    <div class="nav-item active" data-view="all" onclick="changeView('all')">✨ AI 名單中心</div>
+    <div class="nav-item" data-view="waiting" onclick="changeView('waiting')">📞 待聯繫名單</div>
+    <div class="nav-item" data-view="hot" onclick="changeView('hot')">🔥 有效商機</div>
+    <div class="nav-item" data-view="follow" onclick="changeView('follow')">📅 待追蹤</div>
+    <div class="nav-item" data-view="closed" onclick="changeView('closed')">✅ 已結案</div>
     <div class="nav-title">管理</div>
     <div class="nav-item">👥 業務指派</div>
     <div class="nav-item">▥ 統計報表</div>
@@ -62,7 +62,7 @@ button,input,select{font:inherit}.hidden{display:none!important}
 
   <main class="main">
     <div class="topbar">
-      <div><h1>AI 名單中心</h1><p>資料直接讀取 Supabase 雲端商機資料庫。</p></div>
+      <div><h1 id="pageTitle">AI 名單中心</h1><p id="pageSubtitle">資料直接讀取 Supabase 雲端商機資料庫。</p></div>
       <div class="actions"><span id="userEmail" class="user-badge"></span><button class="btn btn-light" onclick="loadLeads()">↻ 重新整理</button><button class="btn btn-light" onclick="logout()">登出</button></div>
     </div>
 
@@ -70,7 +70,7 @@ button,input,select{font:inherit}.hidden{display:none!important}
 
     <section class="panel">
       <div class="panel-head">
-        <h3>AI 開發名單</h3>
+        <h3 id="panelTitle">AI 開發名單</h3>
         <div class="filters">
           <input id="search" placeholder="搜尋公司名稱" oninput="render()">
           <select id="typeFilter" onchange="render()"><option value="">全部類型</option><option value="ERP">ERP</option><option value="AI">AI</option><option value="戰情室">戰情室</option><option value="API串接">API串接</option><option value="MES串接">MES串接</option></select>
@@ -97,6 +97,16 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let leads = [];
 let currentUser = null;
+let currentView = 'all';
+
+const viewConfig = {
+  dashboard:{title:'首頁儀表板',subtitle:'快速掌握目前 AI 開發名單與商機進度。',panel:'全部商機概況',status:''},
+  all:{title:'AI 名單中心',subtitle:'AI 匯入與人工審核的開發名單中心。',panel:'AI 開發名單',status:''},
+  waiting:{title:'待聯繫名單',subtitle:'已確認值得開發，等待業務人員聯絡的公司。',panel:'待聯繫名單',status:'waiting'},
+  hot:{title:'有效商機',subtitle:'已確認有明確需求或具高度成交可能性的商機。',panel:'有效商機',status:'hot'},
+  follow:{title:'待追蹤',subtitle:'需要持續追蹤的商機。',panel:'待追蹤名單',status:'follow'},
+  closed:{title:'已結案',subtitle:'已完成或已結束追蹤的商機。',panel:'已結案名單',status:'closed'}
+};
 
 function esc(s=''){return String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function parseTypes(value=''){if(Array.isArray(value))return value;return String(value||'').split(/[,+、/|]/).map(x=>x.trim()).filter(Boolean)}
@@ -116,12 +126,43 @@ async function loadLeads(){
   leads=(data||[]).map(mapRow);render();
 }
 
+function changeView(view){
+  currentView=view;
+  const cfg=viewConfig[view]||viewConfig.all;
+  document.getElementById('pageTitle').textContent=cfg.title;
+  document.getElementById('pageSubtitle').textContent=cfg.subtitle;
+  document.getElementById('panelTitle').textContent=cfg.panel;
+  document.querySelectorAll('.nav-item[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));
+  document.getElementById('statusFilter').value=cfg.status||'';
+  render();
+}
+
+function actionButtons(x){
+  const s=x.status;
+  if(s==='pending') return `<button class="btn btn-success" onclick="updateLeadStatus(${x.id},'waiting')">加入待聯繫</button><button class="btn btn-danger" onclick="updateLeadStatus(${x.id},'rejected')">排除</button>`;
+  if(s==='waiting') return `<button class="btn btn-light" onclick="updateLeadStatus(${x.id},'contacted')">已接觸</button><button class="btn btn-success" onclick="updateLeadStatus(${x.id},'hot')">有需求</button><button class="btn btn-light" onclick="updateLeadStatus(${x.id},'follow')">待追蹤</button><button class="btn btn-danger" onclick="updateLeadStatus(${x.id},'rejected')">排除</button>`;
+  if(s==='contacted') return `<button class="btn btn-success" onclick="updateLeadStatus(${x.id},'hot')">轉有效商機</button><button class="btn btn-light" onclick="updateLeadStatus(${x.id},'follow')">待追蹤</button><button class="btn btn-light" onclick="updateLeadStatus(${x.id},'closed')">結案</button>`;
+  if(s==='hot') return `<button class="btn btn-light" onclick="updateLeadStatus(${x.id},'follow')">待追蹤</button><button class="btn btn-light" onclick="updateLeadStatus(${x.id},'closed')">結案</button>`;
+  if(s==='follow') return `<button class="btn btn-light" onclick="updateLeadStatus(${x.id},'contacted')">已接觸</button><button class="btn btn-success" onclick="updateLeadStatus(${x.id},'hot')">有需求</button><button class="btn btn-light" onclick="updateLeadStatus(${x.id},'closed')">結案</button>`;
+  if(s==='closed') return `<button class="btn btn-light" onclick="updateLeadStatus(${x.id},'follow')">重新追蹤</button>`;
+  if(s==='rejected') return `<button class="btn btn-light" onclick="updateLeadStatus(${x.id},'pending')">恢復審核</button>`;
+  return '';
+}
+
 function render(){
   const q=document.getElementById('search').value.trim().toLowerCase();
   const type=document.getElementById('typeFilter').value;
   const minScore=Number(document.getElementById('scoreFilter').value||0);
   const st=document.getElementById('statusFilter').value;
-  const rows=leads.filter(x=>(!q||x.company.toLowerCase().includes(q))&&(!type||x.types.includes(type))&&x.score>=minScore&&(!st||x.status===st)).sort((a,b)=>b.score-a.score);
+  const cfg=viewConfig[currentView]||viewConfig.all;
+
+  const rows=leads.filter(x=>
+    (!q||x.company.toLowerCase().includes(q)) &&
+    (!type||x.types.includes(type)) &&
+    x.score>=minScore &&
+    (!st||x.status===st) &&
+    (!cfg.status||x.status===cfg.status)
+  ).sort((a,b)=>b.score-a.score);
 
   document.getElementById('tbody').innerHTML=rows.length?rows.map(x=>`
   <tr>
@@ -130,20 +171,29 @@ function render(){
     <td><span class="score ${scoreClass(x.score)}">${x.score}</span></td>
     <td><div class="reason">${esc(x.reason)}</div></td>
     <td><div class="source">${esc(x.source)}</div>${x.sourceUrl?`<div class="meta"><a href="${esc(x.sourceUrl)}" target="_blank" rel="noopener">查看來源</a></div>`:''}</td>
-    <td><div class="note">${esc(suggestionFor(x))}</div></td>
+    <td><div class="note">${esc(suggestionFor(x))}</div>${x.nextFollowupAt?`<div class="meta">下次追蹤：${esc(x.nextFollowupAt)}</div>`:''}</td>
     <td><span class="status ${statusClass(x.status)}">${statusText(x.status)}</span></td>
-    <td><div class="row-actions">${x.status!=='waiting'?`<button class="btn btn-success" onclick="updateLeadStatus(${x.id},'waiting')">加入待聯繫</button>`:''}${x.status!=='rejected'?`<button class="btn btn-danger" onclick="updateLeadStatus(${x.id},'rejected')">排除</button>`:''}</div></td>
+    <td><div class="row-actions">${actionButtons(x)}</div></td>
   </tr>`).join(''):'<tr><td colspan="8"><div class="empty">目前沒有符合條件的名單</div></td></tr>';
 
-  const total=leads.length,pending=leads.filter(x=>x.status==='pending').length,waiting=leads.filter(x=>x.status==='waiting').length,high=leads.filter(x=>x.score>=80).length,rejected=leads.filter(x=>x.status==='rejected').length;
-  const data=[['AI 匯入總數',total],['待審核',pending],['80 分以上',high],['待聯繫',waiting],['已排除',rejected]];
+  const total=leads.length;
+  const pending=leads.filter(x=>x.status==='pending').length;
+  const waiting=leads.filter(x=>x.status==='waiting').length;
+  const hot=leads.filter(x=>x.status==='hot').length;
+  const follow=leads.filter(x=>x.status==='follow').length;
+  const closed=leads.filter(x=>x.status==='closed').length;
+
+  let data=[['AI 匯入總數',total],['待審核',pending],['待聯繫',waiting],['有效商機',hot],['待追蹤',follow]];
+  if(currentView==='closed') data[4]=['已結案',closed];
+
   document.getElementById('kpis').innerHTML=data.map(([a,b])=>`<div class="kpi"><div class="label">${a}</div><div class="num">${b}</div></div>`).join('');
 }
 
 async function updateLeadStatus(id,status){
   const {error}=await db.from('leads').update({status}).eq('id',id);
-  if(error){console.error(error);toast(error.message.toLowerCase().includes('row-level security')?'目前尚未開放 UPDATE 權限，下一步設定 RLS':'更新失敗：'+error.message);return}
-  const x=leads.find(v=>v.id===id);if(x)x.status=status;render();toast(status==='waiting'?'已加入待聯繫名單':'已排除名單');
+  if(error){console.error(error);toast('更新失敗：'+error.message);return}
+  const x=leads.find(v=>v.id===id);if(x)x.status=status;
+  render();toast('狀態已更新為：'+statusText(status));
 }
 
 async function logout(){await db.auth.signOut();currentUser=null;leads=[];showLogin()}
@@ -166,7 +216,7 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
 async function init(){
   const {data,error}=await db.auth.getSession();
   if(error||!data.session?.user){showLogin();return}
-  currentUser=data.session.user;showApp();await loadLeads();
+  currentUser=data.session.user;showApp();await loadLeads();changeView('all');
 }
 db.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT'){currentUser=null;showLogin()}});
 init();
