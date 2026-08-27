@@ -261,7 +261,30 @@ function scoreClass(s){return Number(s||0)>=80?'high':Number(s||0)>=60?'mid':'lo
 function normalizeStatus(s){return s==='accepted'?'waiting':(s||'pending')}
 function statusText(s){return({pending:'AI 待審核',waiting:'待聯繫',contacted:'已接觸',hot:'有需求',follow:'待追蹤',closed:'已結案',rejected:'已排除'})[normalizeStatus(s)]||s}
 function suggestionFor(x){const t=x.types||[];if(t.some(v=>v.includes('MES')))return'建議先確認現有 ERP、生管流程與 MES 串接需求。';if(t.some(v=>v.includes('API')))return'建議先確認目前使用的平台、API 開放狀況及希望自動化的流程。';if(t.some(v=>v.includes('戰情室')||v.includes('AI')))return'建議切入管理報表、即時資訊與 AI 應用情境。';if(t.some(v=>v.includes('ERP')))return'建議先確認現有 ERP 使用年限、痛點及是否有汰換規劃。';return'建議先電話確認目前資訊系統現況與近期數位化計畫。'}
-function mapRow(r){return{id:r.id,company:r.company_name||'',city:r.city||'',industry:r.industry||'',types:parseTypes(r.opportunity_type),score:Number(r.ai_score||0),reason:r.ai_reason||'',source:r.source||'',sourceUrl:r.source_url||'',status:normalizeStatus(r.status),owner:r.owner||'',nextFollowupAt:r.next_followup_at||'',closeReason:r.close_reason||'',stage:r.stage||'new',amount:Number(r.estimated_amount||0),probability:Number(r.probability||0),expectedCloseDate:r.expected_close_date||'',dealNote:r.deal_note||''}}
+function normalizeMoney(v){
+  const n=Number(String(v??0).replace(/[,\s]/g,''));
+  if(!Number.isFinite(n))return 0;
+  // 修正歷史資料曾被誤放大 10 倍的情況：
+  // 若 estimated_amount 與 budget 恰為 10 倍關係，以 budget 為可信基準。
+  return n;
+}
+function mapRow(r){
+  const rawAmount=normalizeMoney(r.estimated_amount);
+  const budget=normalizeMoney(r.budget);
+  const amount=(budget>0 && rawAmount===budget*10)?budget:rawAmount;
+  return{
+    id:r.id,company:r.company_name||'',city:r.city||'',industry:r.industry||'',
+    types:parseTypes(r.opportunity_type),score:Number(r.ai_score||0),reason:r.ai_reason||'',
+    source:r.source||'',sourceUrl:r.source_url||'',status:normalizeStatus(r.status),
+    owner:r.owner||'',nextFollowupAt:r.next_followup_at||'',closeReason:r.close_reason||'',
+    stage:r.stage||'new',amount,probability:Number(r.probability||0),
+    expectedCloseDate:r.expected_close_date||'',dealNote:r.deal_note||'',
+    contactName:r.contact_name||'',contactTitle:r.contact_title||'',contactPhone:r.contact_phone||'',
+    contactEmail:r.contact_email||'',leadSource:r.lead_source||'',competitor:r.competitor||'',
+    budget,decisionMaker:r.decision_maker||'',requiredModules:r.required_modules||'',
+    nextAction:r.next_action||'',aiSummary:r.ai_summary||'',lastContactAt:r.last_contact_at||''
+  }
+}
 const stageNames={new:'新名單',qualified:'需求確認',demo:'Demo / 提案',quote:'報價',negotiation:'議價',won:'成交',lost:'失單'};
 const stageText=s=>stageNames[s]||'新名單';
 const money=v=>'NT$ '+Number(v||0).toLocaleString('zh-TW');
