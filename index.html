@@ -66,7 +66,19 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 .rule-card h4{margin:0 0 10px}.rule-card label{display:block;font-size:12px;font-weight:700;margin:7px 0 5px}.rule-card input{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px}
 @media(max-width:1000px){.report-grid,.rule-grid{grid-template-columns:1fr}}
 
-</style>
+
+/* ===== CRM V2 ===== */
+.v2-kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
+.v2-kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+.v2-kpi span{display:block;font-size:11px;color:var(--muted)}.v2-kpi b{display:block;font-size:20px;margin-top:5px}
+.work-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;margin-bottom:16px}
+.work-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:var(--shadow)}
+.work-card h3{margin:0 0 10px}.work-item{padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}.work-item:last-child{border-bottom:0}
+.timeline{border-left:2px solid #dbeafe;margin:8px 0 0 7px;padding-left:14px}.timeline-item{position:relative;padding:0 0 14px}.timeline-item:before{content:"";position:absolute;left:-20px;top:4px;width:9px;height:9px;border-radius:50%;background:#2563eb}
+.timeline-item b{font-size:12px}.timeline-item div{font-size:11px;color:var(--muted);margin-top:3px}
+.forecast-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.forecast-box{border:1px solid var(--line);border-radius:12px;padding:12px;background:#f8fafc}.forecast-box b{font-size:18px}
+@media(max-width:1100px){.v2-kpis{grid-template-columns:repeat(3,1fr)}.work-grid{grid-template-columns:1fr}.forecast-grid{grid-template-columns:1fr}}
+
 </head>
 <body>
 <section id="loginPage" class="login-page">
@@ -94,7 +106,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 <div class="nav-title">管理</div>
 <div class="nav-item" data-view="assign" onclick="changeView('assign')">👥 業務指派</div>
 <div class="nav-item" data-view="pipeline" onclick="changeView('pipeline')">🧭 Pipeline 看板</div>
-<div class="nav-item" data-view="reports" onclick="changeView('reports')">▥ 統計報表</div>
+<div class="nav-item" data-view="mywork" onclick="changeView('mywork')">🗓 個人工作台</div><div class="nav-item" data-view="reports" onclick="changeView('reports')">▥ 統計報表 V2</div>
 <div class="nav-item" data-view="rules" onclick="changeView('rules')">⚙ AI 規則設定</div>
 </aside>
 
@@ -155,6 +167,17 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 </div><div style="margin-top:14px"><button class="btn btn-primary" onclick="saveRules()">儲存規則</button> <button class="btn btn-light" onclick="resetRules()">恢復預設</button></div></div>
 </section>
 
+
+<section id="myworkView" class="hidden" style="margin-bottom:16px">
+  <div id="myWorkKpis" class="v2-kpis"></div>
+  <div class="work-grid">
+    <div class="work-card"><h3>今天與逾期任務</h3><div id="myTasks"></div></div>
+    <div class="work-card"><h3>本週預計成交</h3><div id="weekDeals"></div></div>
+    <div class="work-card"><h3>停滯 / 高風險商機</h3><div id="riskDeals"></div></div>
+    <div class="work-card"><h3>重大商機</h3><div id="largeDeals"></div></div>
+  </div>
+</section>
+
 <section id="listPanel" class="panel">
 <div class="panel-head">
 <h3 id="panelTitle">AI 開發名單</h3>
@@ -194,7 +217,20 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 </form>
 </div>
 </div>
-<div id="dealModal" class="modal-backdrop hidden"><div class="modal"><div class="modal-head"><h2 id="dealModalTitle">商機資料</h2><button class="btn btn-light" type="button" onclick="closeDealModal()">✕</button></div><form id="dealForm"><div class="modal-body"><input id="dealLeadId" type="hidden"><div class="deal-grid"><div class="field"><label>負責業務</label><input id="dealOwner" placeholder="例如：howard@itecerp.com"></div><div class="field"><label>商機階段</label><select id="dealStage"><option value="new">新名單</option><option value="qualified">需求確認</option><option value="demo">Demo / 提案</option><option value="quote">報價</option><option value="negotiation">議價</option><option value="won">成交</option><option value="lost">失單</option></select></div><div class="field"><label>預估金額 NT$</label><input id="dealAmount" type="number" min="0"></div><div class="field"><label>成交率 %</label><input id="dealProbability" type="number" min="0" max="100"></div><div class="field"><label>預計成交日</label><input id="dealCloseDate" type="date"></div><div class="field"><label>下次追蹤</label><input id="dealFollowDate" type="date"></div></div><div id="lostReasonField" class="field hidden"><label>失單原因 *</label><select id="dealLostReason"><option value="">請選擇</option><option>價格因素</option><option>競品成交</option><option>預算不足</option><option>專案暫緩</option><option>需求不符</option><option>無決策時程</option><option>聯繫不上</option><option>其他</option></select></div><div class="field"><label>商機備註</label><textarea id="dealNote"></textarea></div></div><div class="modal-foot"><button type="button" class="btn btn-light" onclick="closeDealModal()">取消</button><button class="btn btn-primary" type="submit">儲存商機</button></div></form></div></div><div class="toast" id="toast"></div>
+<div id="dealModal" class="modal-backdrop hidden"><div class="modal"><div class="modal-head"><h2 id="dealModalTitle">商機資料</h2><button class="btn btn-light" type="button" onclick="closeDealModal()">✕</button></div><form id="dealForm"><div class="modal-body"><input id="dealLeadId" type="hidden"><div class="deal-grid"><div class="field"><label>負責業務</label><input id="dealOwner" placeholder="例如：howard@itecerp.com"></div><div class="field"><label>商機階段</label><select id="dealStage"><option value="new">新名單</option><option value="qualified">需求確認</option><option value="demo">Demo / 提案</option><option value="quote">報價</option><option value="negotiation">議價</option><option value="won">成交</option><option value="lost">失單</option></select></div><div class="field"><label>預估金額 NT$</label><input id="dealAmount" type="number" min="0"></div><div class="field"><label>成交率 %</label><input id="dealProbability" type="number" min="0" max="100"></div><div class="field"><label>預計成交日</label><input id="dealCloseDate" type="date"></div><div class="field"><label>下次追蹤</label><input id="dealFollowDate" type="date"></div></div><div id="lostReasonField" class="field hidden"><label>失單原因 *</label><select id="dealLostReason"><option value="">請選擇</option><option>價格因素</option><option>競品成交</option><option>預算不足</option><option>專案暫緩</option><option>需求不符</option><option>無決策時程</option><option>聯繫不上</option><option>其他</option></select></div><div class="grid2">
+<div class="field"><label>聯絡人</label><input id="dealContact"></div>
+<div class="field"><label>職稱</label><input id="dealTitle"></div>
+<div class="field"><label>電話</label><input id="dealPhone"></div>
+<div class="field"><label>Email</label><input id="dealEmail" type="email"></div>
+<div class="field"><label>商機來源</label><input id="dealSource" placeholder="官網／轉介紹／開發名單／活動..."></div>
+<div class="field"><label>競品</label><input id="dealCompetitor"></div>
+<div class="field"><label>客戶預算</label><input id="dealBudget" type="number" min="0"></div>
+<div class="field"><label>決策者</label><input id="dealDecisionMaker"></div>
+</div>
+<div class="field"><label>需求模組</label><input id="dealModules" placeholder="ERP、BPM、APS、戰情室、AI..."></div>
+<div class="field"><label>下一步行動</label><input id="dealNextAction" placeholder="例如：9/3 提供報價、安排 Demo"></div>
+<div class="field"><label>AI 客戶需求摘要</label><textarea id="dealAiSummary" placeholder="可先人工整理；後續可串 AI API 自動產生"></textarea></div>
+<div class="field"><label>商機備註</label><textarea id="dealNote"></textarea></div></div><div class="modal-foot"><button type="button" class="btn btn-light" onclick="closeDealModal()">取消</button><button class="btn btn-primary" type="submit">儲存商機</button></div></form></div></div><div class="toast" id="toast"></div>
 
 <script>
 const SUPABASE_URL='https://xxkkqsthotnovspkmrhe.supabase.co';
@@ -214,7 +250,7 @@ follow:{title:'待追蹤',subtitle:'需要持續追蹤的商機。',panel:'待�
 closed:{title:'已結案',subtitle:'已完成或已結束追蹤的商機。',panel:'已結案名單',status:'closed'},
 assign:{title:'業務指派',subtitle:'批次指派商機負責人與銷售階段。',panel:'業務指派',status:''},
 pipeline:{title:'Pipeline 看板',subtitle:'依銷售階段掌握商機數量與金額。',panel:'Pipeline',status:''},
-reports:{title:'統計報表',subtitle:'查看商機、業務、成交與追蹤績效。',panel:'統計報表',status:''},
+mywork:{title:'個人工作台',subtitle:'集中查看今天要做的事、本週成交與高風險商機。',panel:'個人工作台',status:''},reports:{title:'統計報表 V2',subtitle:'Forecast、成交、失單、業務與追蹤績效。',panel:'統計報表 V2',status:''},
 rules:{title:'AI 規則設定',subtitle:'調整前端商機判讀與提醒門檻。',panel:'AI 規則設定',status:''}};
 
 function esc(s=''){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
@@ -253,12 +289,14 @@ statusFilter.value=cfg.status||'';
 dashboardSummary.classList.toggle('hidden',view!=='dashboard');
 assignView.classList.toggle('hidden',view!=='assign');
 pipelineView.classList.toggle('hidden',view!=='pipeline');
+myworkView.classList.toggle('hidden',view!=='mywork');
 reportsView.classList.toggle('hidden',view!=='reports');
 rulesView.classList.toggle('hidden',view!=='rules');
-listPanel.classList.toggle('hidden',['assign','pipeline','reports','rules'].includes(view));
+listPanel.classList.toggle('hidden',['assign','pipeline','mywork','reports','rules'].includes(view));
 render();
 if(view==='assign')renderAssign();
 if(view==='pipeline')renderPipeline();
+if(view==='mywork')renderMyWork();
 if(view==='reports')renderReports();
 if(view==='rules')renderRules();
 }
@@ -349,27 +387,44 @@ x.stage=newStage;if(payload.status)x.status=payload.status;render();renderPipeli
 function reportRows(items,maxValue,labelFn,valueFn,displayFn){return items.map(item=>{const v=valueFn(item),w=maxValue?Math.round(v/maxValue*100):0;return `<div class="report-row"><b>${esc(labelFn(item))}</b><div class="report-bar"><i style="width:${w}%"></i></div><span>${displayFn(item,v)}</span></div>`}).join('')}
 function renderReports(){
 const open=leads.filter(x=>!['won','lost'].includes(x.stage)),pipeline=open.reduce((s,x)=>s+x.amount,0),weighted=open.reduce((s,x)=>s+weightedAmount(x),0),won=leads.filter(x=>x.stage==='won'),closedCnt=leads.filter(x=>['won','lost'].includes(x.stage)).length,winRate=closedCnt?Math.round(won.length/closedCnt*100):0;
-reportSummary.innerHTML=[['案件總數',leads.length],['Pipeline',money(pipeline)],['加權預估',money(weighted)],['成交率',winRate+'%']].map(([a,b])=>`<div class="crm-box"><span class="meta">${a}</span><b>${b}</b></div>`).join('');
+const wonAmt=won.reduce((s,x)=>s+x.amount,0),avgWon=won.length?Math.round(wonAmt/won.length):0,forecast30=open.filter(x=>x.expectedCloseDate&&new Date(x.expectedCloseDate)<=new Date(Date.now()+30*86400000)).reduce((s,x)=>s+weightedAmount(x),0);reportSummary.innerHTML=[['案件總數',leads.length],['Pipeline',money(pipeline)],['30日 Forecast',money(forecast30)],['加權預估',money(weighted)],['成交率',winRate+'%'],['平均成交客單',money(avgWon)]].map(([a,b])=>`<div class="crm-box"><span class="meta">${a}</span><b>${b}</b></div>`).join('');
 const owners=[...new Set(leads.map(x=>x.owner||'未指派'))].sort(),od=owners.map(o=>{const arr=leads.filter(x=>(x.owner||'未指派')===o);return{o,arr,pipe:arr.filter(x=>!['won','lost'].includes(x.stage)).reduce((s,x)=>s+x.amount,0),weight:arr.filter(x=>!['won','lost'].includes(x.stage)).reduce((s,x)=>s+weightedAmount(x),0),won:arr.filter(x=>x.stage==='won').reduce((s,x)=>s+x.amount,0),wonCnt:arr.filter(x=>x.stage==='won').length,over:arr.filter(x=>needsFollow(x)&&isOverdue(x.nextFollowupAt)).length}});
 const maxO=Math.max(1,...od.map(x=>x.pipe));ownerReport.innerHTML=reportRows(od,maxO,x=>x.o,x=>x.pipe,(x,v)=>money(v))||'<div class="empty">尚無資料</div>';
 ownerStatBody.innerHTML=od.map(x=>`<tr><td>${esc(x.o)}</td><td>${x.arr.length}</td><td>${money(x.pipe)}</td><td>${money(x.weight)}</td><td>${money(x.won)}</td><td>${x.wonCnt}</td><td>${x.over}</td></tr>`).join('');
 const ss=Object.keys(stageNames).map(s=>({s,c:leads.filter(x=>x.stage===s).length})),ms=Math.max(1,...ss.map(x=>x.c));stageReport.innerHTML=reportRows(ss,ms,x=>stageText(x.s),x=>x.c,(x,v)=>v+' 筆');
 const sc=[{l:'80 分以上',c:leads.filter(x=>x.score>=80).length},{l:'60–79 分',c:leads.filter(x=>x.score>=60&&x.score<80).length},{l:'60 分以下',c:leads.filter(x=>x.score<60).length}],msc=Math.max(1,...sc.map(x=>x.c));scoreReport.innerHTML=reportRows(sc,msc,x=>x.l,x=>x.c,(x,v)=>v+' 筆');
-const f=[{l:'今日應追蹤',c:leads.filter(x=>needsFollow(x)&&isToday(x.nextFollowupAt)).length},{l:'逾期未追蹤',c:leads.filter(x=>needsFollow(x)&&isOverdue(x.nextFollowupAt)).length},{l:'未排追蹤日',c:leads.filter(x=>needsFollow(x)&&!x.nextFollowupAt).length}],mf=Math.max(1,...f.map(x=>x.c));followReport.innerHTML=reportRows(f,mf,x=>x.l,x=>x.c,(x,v)=>v+' 筆');
+const f=[{l:'今日應追蹤',c:leads.filter(x=>needsFollow(x)&&isToday(x.nextFollowupAt)).length},{l:'逾期未追蹤',c:leads.filter(x=>needsFollow(x)&&isOverdue(x.nextFollowupAt)).length},{l:'未排追蹤日',c:leads.filter(x=>needsFollow(x)&&!x.nextFollowupAt).length}],mf=Math.max(1,...f.map(x=>x.c));const lostMap={};leads.filter(x=>x.stage==='lost').forEach(x=>{const k=x.closeReason||'未填原因';lostMap[k]=(lostMap[k]||0)+1});const lostRows=Object.entries(lostMap).sort((a,b)=>b[1]-a[1]);followReport.innerHTML=reportRows(f,mf,x=>x.l,x=>x.c,(x,v)=>v+' 筆')+(lostRows.length?'<h4 style="margin:18px 0 8px">失單原因</h4>'+lostRows.map(([k,v])=>`<div class="work-item"><b>${esc(k)}</b><span style="float:right">${v} 筆</span></div>`).join(''):'');
 }
 function exportCsv(){
 const rows=[['公司','城市','產業','AI分數','階段','預估金額','成交率','負責業務','預計成交日','下次追蹤','狀態']];leads.forEach(x=>rows.push([x.company,x.city,x.industry,x.score,stageText(x.stage),x.amount,x.probability,x.owner||'',dateOnly(x.expectedCloseDate),dateOnly(x.nextFollowupAt),statusText(x.status)]));
 const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\r\n'),blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='CRM商機報表_'+today()+'.csv';a.click();URL.revokeObjectURL(url);
 }
+
+function daysBetween(a,b){return Math.floor((b-a)/86400000)}
+function renderMyWork(){
+ const me=currentUser?.email||'', mine=leads.filter(x=>!x.owner||x.owner===me), now=new Date(), weekEnd=new Date();weekEnd.setDate(now.getDate()+7);
+ const open=mine.filter(x=>!['won','lost'].includes(x.stage)), pipe=open.reduce((s,x)=>s+x.amount,0), weighted=open.reduce((s,x)=>s+weightedAmount(x),0);
+ const overdue=mine.filter(x=>needsFollow(x)&&isOverdue(x.nextFollowupAt)), todayRows=mine.filter(x=>needsFollow(x)&&isToday(x.nextFollowupAt));
+ const week=mine.filter(x=>x.expectedCloseDate&&new Date(x.expectedCloseDate)>=new Date(today())&&new Date(x.expectedCloseDate)<=weekEnd&&!['won','lost'].includes(x.stage));
+ const risk=mine.filter(x=>!['won','lost'].includes(x.stage)&&((x.lastContactAt&&daysBetween(new Date(x.lastContactAt),now)>=14)||(!x.lastContactAt&&x.status!=='pending')));
+ const large=mine.filter(x=>!['won','lost'].includes(x.stage)&&x.amount>=crmRules.largeAmount).sort((a,b)=>b.amount-a.amount);
+ myWorkKpis.innerHTML=[['我的 Pipeline',money(pipe)],['加權預估',money(weighted)],['今日追蹤',todayRows.length],['逾期追蹤',overdue.length],['本週預計成交',week.length],['重大商機',large.length]].map(([a,b])=>`<div class="v2-kpi"><span>${a}</span><b>${b}</b></div>`).join('');
+ const item=x=>`<div class="work-item clickable" onclick="openDealModal(${x.id})"><b>${esc(x.company)}</b>｜${money(x.amount)}<div class="mini">${stageText(x.stage)}${x.nextAction?'｜下一步：'+esc(x.nextAction):''}</div></div>`;
+ myTasks.innerHTML=[...overdue,...todayRows.filter(x=>!overdue.some(o=>o.id===x.id))].map(item).join('')||'<div class="empty">今天沒有待處理任務</div>';
+ weekDeals.innerHTML=week.sort((a,b)=>String(a.expectedCloseDate).localeCompare(String(b.expectedCloseDate))).map(item).join('')||'<div class="empty">本週沒有預計成交商機</div>';
+ riskDeals.innerHTML=risk.map(item).join('')||'<div class="empty">目前沒有高風險商機</div>';
+ largeDeals.innerHTML=large.map(item).join('')||'<div class="empty">目前沒有重大商機</div>';
+}
+
 function renderRules(){ruleHighScore.value=crmRules.highScore;ruleDueDays.value=crmRules.dueDays;ruleLargeAmount.value=crmRules.largeAmount;ruleDefaultProb.value=crmRules.defaultProb}
 function saveRules(){crmRules={highScore:Number(ruleHighScore.value||80),dueDays:Number(ruleDueDays.value||3),largeAmount:Number(ruleLargeAmount.value||1000000),defaultProb:Number(ruleDefaultProb.value||20)};localStorage.setItem('crm_rules',JSON.stringify(crmRules));render();toast('AI 規則已儲存')}
 function resetRules(){crmRules={...defaultRules};localStorage.setItem('crm_rules',JSON.stringify(crmRules));renderRules();render();toast('已恢復預設規則')}
 
 function toggleLostReasonField(){const lost=dealStage.value==='lost';lostReasonField.classList.toggle('hidden',!lost);dealLostReason.required=lost}
 dealStage.addEventListener('change',toggleLostReasonField);
-function openDealModal(id){const x=leads.find(v=>v.id===id);if(!x)return;dealLeadId.value=id;dealModalTitle.textContent='商機資料｜'+x.company;dealOwner.value=x.owner||'';dealStage.value=x.stage||'new';dealAmount.value=x.amount||0;dealProbability.value=x.probability||crmRules.defaultProb;dealCloseDate.value=dateOnly(x.expectedCloseDate);dealFollowDate.value=dateOnly(x.nextFollowupAt);dealLostReason.value=x.closeReason||'';dealNote.value=x.dealNote||'';toggleLostReasonField();dealModal.classList.remove('hidden')}
+function openDealModal(id){const x=leads.find(v=>v.id===id);if(!x)return;dealLeadId.value=id;dealModalTitle.textContent='商機資料｜'+x.company;dealOwner.value=x.owner||'';dealStage.value=x.stage||'new';dealAmount.value=x.amount||0;dealProbability.value=x.probability||crmRules.defaultProb;dealCloseDate.value=dateOnly(x.expectedCloseDate);dealFollowDate.value=dateOnly(x.nextFollowupAt);dealLostReason.value=x.closeReason||'';dealContact.value=x.contactName||'';dealTitle.value=x.contactTitle||'';dealPhone.value=x.contactPhone||'';dealEmail.value=x.contactEmail||'';dealSource.value=x.leadSource||'';dealCompetitor.value=x.competitor||'';dealBudget.value=x.budget||0;dealDecisionMaker.value=x.decisionMaker||'';dealModules.value=x.requiredModules||'';dealNextAction.value=x.nextAction||'';dealAiSummary.value=x.aiSummary||'';dealNote.value=x.dealNote||'';toggleLostReasonField();dealModal.classList.remove('hidden')}
 function closeDealModal(){dealModal.classList.add('hidden')}
-dealForm.addEventListener('submit',async e=>{e.preventDefault();const id=Number(dealLeadId.value),x=leads.find(v=>v.id===id);if(dealStage.value==='lost'&&!dealLostReason.value){toast('請選擇失單原因');return}const payload={owner:dealOwner.value.trim()||null,stage:dealStage.value,estimated_amount:Number(dealAmount.value||0),probability:Number(dealProbability.value||0),expected_close_date:dealCloseDate.value||null,next_followup_at:dealFollowDate.value||null,deal_note:dealNote.value.trim()||null,close_reason:dealStage.value==='lost'?dealLostReason.value:null};if(payload.stage==='won'||payload.stage==='lost')payload.status='closed';else if(x?.status==='closed')payload.status='follow';const {error}=await db.from('leads').update(payload).eq('id',id);if(error){toast('商機儲存失敗：'+error.message);return}if(x){x.owner=payload.owner||'';x.stage=payload.stage;x.amount=payload.estimated_amount;x.probability=payload.probability;x.expectedCloseDate=payload.expected_close_date||'';x.nextFollowupAt=payload.next_followup_at||'';x.dealNote=payload.deal_note||'';x.closeReason=payload.close_reason||'';if(payload.status)x.status=payload.status}closeDealModal();render();if(currentView==='assign')renderAssign();if(currentView==='pipeline')renderPipeline();if(currentView==='reports')renderReports();toast('商機資料已儲存')});
+dealForm.addEventListener('submit',async e=>{e.preventDefault();const id=Number(dealLeadId.value),x=leads.find(v=>v.id===id);if(dealStage.value==='lost'&&!dealLostReason.value){toast('請選擇失單原因');return}const payload={owner:dealOwner.value.trim()||null,stage:dealStage.value,estimated_amount:Number(dealAmount.value||0),probability:Number(dealProbability.value||0),expected_close_date:dealCloseDate.value||null,next_followup_at:dealFollowDate.value||null,deal_note:dealNote.value.trim()||null,close_reason:dealStage.value==='lost'?dealLostReason.value:null,contact_name:dealContact.value.trim()||null,contact_title:dealTitle.value.trim()||null,contact_phone:dealPhone.value.trim()||null,contact_email:dealEmail.value.trim()||null,lead_source:dealSource.value.trim()||null,competitor:dealCompetitor.value.trim()||null,budget:Number(dealBudget.value||0),decision_maker:dealDecisionMaker.value.trim()||null,required_modules:dealModules.value.trim()||null,next_action:dealNextAction.value.trim()||null,ai_summary:dealAiSummary.value.trim()||null};if(payload.stage==='won'||payload.stage==='lost')payload.status='closed';else if(x?.status==='closed')payload.status='follow';const {error}=await db.from('leads').update(payload).eq('id',id);if(error){toast('商機儲存失敗：'+error.message);return}if(x){x.owner=payload.owner||'';x.stage=payload.stage;x.amount=payload.estimated_amount;x.probability=payload.probability;x.expectedCloseDate=payload.expected_close_date||'';x.nextFollowupAt=payload.next_followup_at||'';x.dealNote=payload.deal_note||'';x.closeReason=payload.close_reason||'';x.contactName=payload.contact_name||'';x.contactTitle=payload.contact_title||'';x.contactPhone=payload.contact_phone||'';x.contactEmail=payload.contact_email||'';x.leadSource=payload.lead_source||'';x.competitor=payload.competitor||'';x.budget=payload.budget||0;x.decisionMaker=payload.decision_maker||'';x.requiredModules=payload.required_modules||'';x.nextAction=payload.next_action||'';x.aiSummary=payload.ai_summary||'';if(payload.status)x.status=payload.status}closeDealModal();render();if(currentView==='assign')renderAssign();if(currentView==='pipeline')renderPipeline();if(currentView==='reports')renderReports();toast('商機資料已儲存')});
 dealModal.addEventListener('click',e=>{if(e.target===dealModal)closeDealModal()});
 
 async function updateLeadStatus(id,status){
