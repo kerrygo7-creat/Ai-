@@ -47,6 +47,25 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 @media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.dashboard-grid{grid-template-columns:1fr}.app{grid-template-columns:1fr}.sidebar{display:none}.topbar{align-items:flex-start;flex-direction:column}.grid2{grid-template-columns:1fr}}
 
 .crm-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.crm-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}.crm-box b{display:block;font-size:24px;margin-top:5px}.owner-pill{background:#eef2ff;color:#3730a3;border-radius:999px;padding:4px 7px;font-size:11px;font-weight:800}.money{font-weight:800}.deal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:1000px){.crm-summary{grid-template-columns:repeat(2,1fr)}.deal-grid{grid-template-columns:1fr}}
+
+/* ===== CRM V1 完整管理功能 ===== */
+.mgmt-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--line);background:#f8fafc}
+.mgmt-toolbar input,.mgmt-toolbar select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#fff}
+.pipeline-board{display:grid;grid-template-columns:repeat(7,minmax(210px,1fr));gap:12px;overflow-x:auto;padding:16px}
+.pipe-col{background:#f8fafc;border:1px solid var(--line);border-radius:14px;min-height:220px}
+.pipe-head{padding:12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;font-weight:800}
+.pipe-sum{font-size:11px;color:var(--muted);margin-top:3px}.pipe-body{padding:10px}
+.deal-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:9px;box-shadow:0 3px 10px rgba(15,23,42,.04);cursor:pointer}
+.deal-card:hover{border-color:#93c5fd}.deal-name{font-weight:800}.deal-detail{font-size:11px;color:var(--muted);line-height:1.55;margin-top:5px}
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.report-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px}.report-card h3{margin:0 0 12px}
+.report-row{display:grid;grid-template-columns:minmax(90px,150px) 1fr 95px;gap:10px;align-items:center;margin:10px 0;font-size:12px}
+.report-bar{height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden}.report-bar i{display:block;height:100%;background:#2563eb;border-radius:999px}
+.stat-table{width:100%;min-width:0}.stat-table th,.stat-table td{padding:10px 8px}.checkbox{width:17px;height:17px}.mini{font-size:11px;color:var(--muted)}
+.rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rule-card{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff}
+.rule-card h4{margin:0 0 10px}.rule-card label{display:block;font-size:12px;font-weight:700;margin:7px 0 5px}.rule-card input{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px}
+@media(max-width:1000px){.report-grid,.rule-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -73,7 +92,10 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 <div class="nav-item" data-view="follow" onclick="changeView('follow')">📅 待追蹤</div>
 <div class="nav-item" data-view="closed" onclick="changeView('closed')">✅ 已結案</div>
 <div class="nav-title">管理</div>
-<div class="nav-item">👥 業務指派</div><div class="nav-item">▥ 統計報表</div><div class="nav-item">⚙ AI 規則設定</div>
+<div class="nav-item" data-view="assign" onclick="changeView('assign')">👥 業務指派</div>
+<div class="nav-item" data-view="pipeline" onclick="changeView('pipeline')">🧭 Pipeline 看板</div>
+<div class="nav-item" data-view="reports" onclick="changeView('reports')">▥ 統計報表</div>
+<div class="nav-item" data-view="rules" onclick="changeView('rules')">⚙ AI 規則設定</div>
 </aside>
 
 <main class="main">
@@ -94,7 +116,46 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 </section>
 
 <section id="crmSummary" class="crm-summary"></section>
-<section class="panel">
+
+<section id="assignView" class="panel hidden" style="margin-bottom:16px">
+<div class="panel-head"><h3>業務指派管理</h3><div class="mini">可勾選多筆後批次指派負責業務或商機階段</div></div>
+<div class="mgmt-toolbar">
+<input id="assignOwner" placeholder="負責業務 Email，例如 howard@itecerp.com">
+<select id="assignStage"><option value="">不變更階段</option><option value="new">新名單</option><option value="qualified">需求確認</option><option value="demo">Demo / 提案</option><option value="quote">報價</option><option value="negotiation">議價</option><option value="won">成交</option><option value="lost">失單</option></select>
+<button class="btn btn-primary" onclick="batchAssign()">套用至勾選商機</button>
+<button class="btn btn-light" onclick="toggleSelectAll(true)">全選</button><button class="btn btn-light" onclick="toggleSelectAll(false)">取消全選</button>
+</div>
+<div class="table-wrap"><table><thead><tr><th style="width:44px">選</th><th>公司</th><th>AI分數</th><th>階段</th><th>預估金額</th><th>成交率</th><th>負責業務</th><th>下次追蹤</th><th>操作</th></tr></thead><tbody id="assignBody"></tbody></table></div>
+</section>
+
+<section id="pipelineView" class="panel hidden" style="margin-bottom:16px">
+<div class="panel-head"><h3>商機 Pipeline</h3><div class="filters"><select id="pipelineOwner" onchange="renderPipeline()"><option value="">全部業務</option></select></div></div>
+<div id="pipelineBoard" class="pipeline-board"></div>
+</section>
+
+<section id="reportsView" class="hidden" style="margin-bottom:16px">
+<div class="crm-summary" id="reportSummary"></div>
+<div class="report-grid">
+<div class="report-card"><h3>各業務 Pipeline</h3><div id="ownerReport"></div></div>
+<div class="report-card"><h3>商機階段分布</h3><div id="stageReport"></div></div>
+<div class="report-card"><h3>AI 分數區間</h3><div id="scoreReport"></div></div>
+<div class="report-card"><h3>追蹤健康度</h3><div id="followReport"></div></div>
+</div>
+<div class="panel"><div class="panel-head"><h3>業務績效明細</h3><button class="btn btn-light" onclick="exportCsv()">匯出 CSV</button></div>
+<div class="table-wrap"><table class="stat-table"><thead><tr><th>業務</th><th>案件數</th><th>Pipeline</th><th>加權預估</th><th>成交金額</th><th>成交件數</th><th>逾期追蹤</th></tr></thead><tbody id="ownerStatBody"></tbody></table></div></div>
+</section>
+
+<section id="rulesView" class="panel hidden" style="margin-bottom:16px">
+<div class="panel-head"><h3>AI 規則設定</h3><div class="mini">規則儲存在此瀏覽器，不會修改既有 Supabase 名單</div></div>
+<div style="padding:16px"><div class="rule-grid">
+<div class="rule-card"><h4>高分商機</h4><label>高分門檻</label><input id="ruleHighScore" type="number" min="0" max="100"></div>
+<div class="rule-card"><h4>追蹤提醒</h4><label>即將到期天數</label><input id="ruleDueDays" type="number" min="0" max="30"></div>
+<div class="rule-card"><h4>金額預警</h4><label>重大商機金額 NT$</label><input id="ruleLargeAmount" type="number" min="0"></div>
+<div class="rule-card"><h4>預設成交率</h4><label>新商機預設 %</label><input id="ruleDefaultProb" type="number" min="0" max="100"></div>
+</div><div style="margin-top:14px"><button class="btn btn-primary" onclick="saveRules()">儲存規則</button> <button class="btn btn-light" onclick="resetRules()">恢復預設</button></div></div>
+</section>
+
+<section id="listPanel" class="panel">
 <div class="panel-head">
 <h3 id="panelTitle">AI 開發名單</h3>
 <div class="filters">
@@ -140,6 +201,9 @@ const SUPABASE_URL='https://xxkkqsthotnovspkmrhe.supabase.co';
 const SUPABASE_KEY='sb_publishable_NXgVHeky_268L-qbe4qyiw_1bBBqTmC';
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let leads=[],currentUser=null,currentView='all';
+const defaultRules={highScore:80,dueDays:3,largeAmount:1000000,defaultProb:20};
+let crmRules=JSON.parse(localStorage.getItem('crm_rules')||'null')||{...defaultRules};
+let selectedLeadIds=new Set();
 
 const viewConfig={
 dashboard:{title:'首頁儀表板',subtitle:'快速掌握今日應追蹤、逾期未追蹤與有效商機。',panel:'全部商機概況',status:''},
@@ -147,7 +211,11 @@ all:{title:'AI 名單中心',subtitle:'AI 匯入與人工審核的開發名單�
 waiting:{title:'待聯繫名單',subtitle:'已確認值得開發，等待業務人員聯絡的公司。',panel:'待聯繫名單',status:'waiting'},
 hot:{title:'有效商機',subtitle:'已確認有明確需求或具高度成交可能性的商機。',panel:'有效商機',status:'hot'},
 follow:{title:'待追蹤',subtitle:'需要持續追蹤的商機。',panel:'待追蹤名單',status:'follow'},
-closed:{title:'已結案',subtitle:'已完成或已結束追蹤的商機。',panel:'已結案名單',status:'closed'}};
+closed:{title:'已結案',subtitle:'已完成或已結束追蹤的商機。',panel:'已結案名單',status:'closed'},
+assign:{title:'業務指派',subtitle:'批次指派商機負責人與銷售階段。',panel:'業務指派',status:''},
+pipeline:{title:'Pipeline 看板',subtitle:'依銷售階段掌握商機數量與金額。',panel:'Pipeline',status:''},
+reports:{title:'統計報表',subtitle:'查看商機、業務、成交與追蹤績效。',panel:'統計報表',status:''},
+rules:{title:'AI 規則設定',subtitle:'調整前端商機判讀與提醒門檻。',panel:'AI 規則設定',status:''}};
 
 function esc(s=''){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function parseTypes(v=''){if(Array.isArray(v))return v;return String(v||'').split(/[,+、/|]/).map(x=>x.trim()).filter(Boolean)}
@@ -182,7 +250,16 @@ pageTitle.textContent=cfg.title;pageSubtitle.textContent=cfg.subtitle;panelTitle
 document.querySelectorAll('.nav-item[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));
 statusFilter.value=cfg.status||'';
 dashboardSummary.classList.toggle('hidden',view!=='dashboard');
+assignView.classList.toggle('hidden',view!=='assign');
+pipelineView.classList.toggle('hidden',view!=='pipeline');
+reportsView.classList.toggle('hidden',view!=='reports');
+rulesView.classList.toggle('hidden',view!=='rules');
+listPanel.classList.toggle('hidden',['assign','pipeline','reports','rules'].includes(view));
 render();
+if(view==='assign')renderAssign();
+if(view==='pipeline')renderPipeline();
+if(view==='reports')renderReports();
+if(view==='rules')renderRules();
 }
 
 function actionButtons(x){
@@ -227,12 +304,56 @@ if(currentView==='closed')data[4]=['已結案',closed];
 kpis.innerHTML=data.map(([a,b])=>`<div class="kpi"><div class="label">${a}</div><div class="num">${b}</div></div>`).join('');
 const open=leads.filter(x=>!['won','lost'].includes(x.stage)),pipe=open.reduce((s,x)=>s+x.amount,0),weighted=open.reduce((s,x)=>s+x.amount*x.probability/100,0),wonAmt=leads.filter(x=>x.stage==='won').reduce((s,x)=>s+x.amount,0);
 crmSummary.innerHTML=[['進行中商機',open.length],['Pipeline 金額',money(pipe)],['加權預估',money(Math.round(weighted))],['已成交金額',money(wonAmt)]].map(([a,b])=>`<div class="crm-box"><span class="meta">${a}</span><b>${b}</b></div>`).join('');
-const owners=[...new Set(leads.map(x=>x.owner).filter(Boolean))];ownerFilter.innerHTML='<option value="">全部業務</option>'+owners.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
+refreshOwnerOptions();
 }
 
-function openDealModal(id){const x=leads.find(v=>v.id===id);if(!x)return;dealLeadId.value=id;dealModalTitle.textContent='商機資料｜'+x.company;dealOwner.value=x.owner||'';dealStage.value=x.stage||'new';dealAmount.value=x.amount||0;dealProbability.value=x.probability||0;dealCloseDate.value=dateOnly(x.expectedCloseDate);dealFollowDate.value=dateOnly(x.nextFollowupAt);dealNote.value=x.dealNote||'';dealModal.classList.remove('hidden')}
+
+function refreshOwnerOptions(){
+const owners=[...new Set(leads.map(x=>x.owner).filter(Boolean))].sort(),cur=ownerFilter.value,pc=window.pipelineOwner?pipelineOwner.value:'';
+const opts='<option value="">全部業務</option>'+owners.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
+ownerFilter.innerHTML=opts;ownerFilter.value=owners.includes(cur)?cur:'';
+if(window.pipelineOwner){pipelineOwner.innerHTML=opts;pipelineOwner.value=owners.includes(pc)?pc:''}
+}
+function weightedAmount(x){return Math.round((x.amount||0)*(x.probability||0)/100)}
+function renderAssign(){
+assignBody.innerHTML=leads.length?leads.slice().sort((a,b)=>b.score-a.score).map(x=>`<tr><td><input class="checkbox" type="checkbox" ${selectedLeadIds.has(x.id)?'checked':''} onchange="setSelected(${x.id},this.checked)"></td><td><div class="company">${esc(x.company)}</div><div class="meta">${esc(x.city)}｜${esc(x.industry)}</div></td><td><span class="score ${scoreClass(x.score)}">${x.score}</span></td><td>${stageText(x.stage)}</td><td class="money">${money(x.amount)}</td><td>${x.probability}%</td><td>${x.owner?`<span class="owner-pill">${esc(x.owner)}</span>`:'<span class="meta">未指派</span>'}</td><td>${x.nextFollowupAt?esc(dateOnly(x.nextFollowupAt)):'-'}</td><td><button class="btn btn-light" onclick="openDealModal(${x.id})">編輯</button></td></tr>`).join(''):'<tr><td colspan="9"><div class="empty">尚無商機</div></td></tr>';
+}
+function setSelected(id,on){on?selectedLeadIds.add(id):selectedLeadIds.delete(id)}
+function toggleSelectAll(on){selectedLeadIds=new Set(on?leads.map(x=>x.id):[]);renderAssign()}
+async function batchAssign(){
+if(!selectedLeadIds.size){toast('請先勾選商機');return}
+const owner=assignOwner.value.trim(),stage=assignStage.value;if(!owner&&!stage){toast('請輸入業務或選擇階段');return}
+const ids=[...selectedLeadIds],payload={};if(owner)payload.owner=owner;if(stage)payload.stage=stage;if(stage==='won')payload.status='closed';
+const {error}=await db.from('leads').update(payload).in('id',ids);if(error){toast('批次指派失敗：'+error.message);return}
+leads.forEach(x=>{if(selectedLeadIds.has(x.id)){if(owner)x.owner=owner;if(stage)x.stage=stage;if(payload.status)x.status=payload.status}});
+selectedLeadIds.clear();assignOwner.value='';assignStage.value='';render();renderAssign();toast(`已更新 ${ids.length} 筆商機`);
+}
+function renderPipeline(){
+refreshOwnerOptions();const owner=pipelineOwner.value,stages=['new','qualified','demo','quote','negotiation','won','lost'];
+pipelineBoard.innerHTML=stages.map(st=>{const arr=leads.filter(x=>x.stage===st&&(!owner||x.owner===owner)),total=arr.reduce((s,x)=>s+(x.amount||0),0);return `<div class="pipe-col"><div class="pipe-head"><div>${stageText(st)}<div class="pipe-sum">${money(total)}</div></div><span>${arr.length}</span></div><div class="pipe-body">${arr.length?arr.sort((a,b)=>b.amount-a.amount).map(x=>`<div class="deal-card" onclick="openDealModal(${x.id})"><div class="deal-name">${esc(x.company)}</div><div class="deal-detail">${money(x.amount)}｜${x.probability}%｜加權 ${money(weightedAmount(x))}<br>${x.owner?esc(x.owner):'未指派'}${x.expectedCloseDate?'<br>預計成交：'+esc(dateOnly(x.expectedCloseDate)):''}</div></div>`).join(''):'<div class="empty">無商機</div>'}</div></div>`}).join('');
+}
+function reportRows(items,maxValue,labelFn,valueFn,displayFn){return items.map(item=>{const v=valueFn(item),w=maxValue?Math.round(v/maxValue*100):0;return `<div class="report-row"><b>${esc(labelFn(item))}</b><div class="report-bar"><i style="width:${w}%"></i></div><span>${displayFn(item,v)}</span></div>`}).join('')}
+function renderReports(){
+const open=leads.filter(x=>!['won','lost'].includes(x.stage)),pipeline=open.reduce((s,x)=>s+x.amount,0),weighted=open.reduce((s,x)=>s+weightedAmount(x),0),won=leads.filter(x=>x.stage==='won'),closedCnt=leads.filter(x=>['won','lost'].includes(x.stage)).length,winRate=closedCnt?Math.round(won.length/closedCnt*100):0;
+reportSummary.innerHTML=[['案件總數',leads.length],['Pipeline',money(pipeline)],['加權預估',money(weighted)],['成交率',winRate+'%']].map(([a,b])=>`<div class="crm-box"><span class="meta">${a}</span><b>${b}</b></div>`).join('');
+const owners=[...new Set(leads.map(x=>x.owner||'未指派'))].sort(),od=owners.map(o=>{const arr=leads.filter(x=>(x.owner||'未指派')===o);return{o,arr,pipe:arr.filter(x=>!['won','lost'].includes(x.stage)).reduce((s,x)=>s+x.amount,0),weight:arr.filter(x=>!['won','lost'].includes(x.stage)).reduce((s,x)=>s+weightedAmount(x),0),won:arr.filter(x=>x.stage==='won').reduce((s,x)=>s+x.amount,0),wonCnt:arr.filter(x=>x.stage==='won').length,over:arr.filter(x=>needsFollow(x)&&isOverdue(x.nextFollowupAt)).length}});
+const maxO=Math.max(1,...od.map(x=>x.pipe));ownerReport.innerHTML=reportRows(od,maxO,x=>x.o,x=>x.pipe,(x,v)=>money(v))||'<div class="empty">尚無資料</div>';
+ownerStatBody.innerHTML=od.map(x=>`<tr><td>${esc(x.o)}</td><td>${x.arr.length}</td><td>${money(x.pipe)}</td><td>${money(x.weight)}</td><td>${money(x.won)}</td><td>${x.wonCnt}</td><td>${x.over}</td></tr>`).join('');
+const ss=Object.keys(stageNames).map(s=>({s,c:leads.filter(x=>x.stage===s).length})),ms=Math.max(1,...ss.map(x=>x.c));stageReport.innerHTML=reportRows(ss,ms,x=>stageText(x.s),x=>x.c,(x,v)=>v+' 筆');
+const sc=[{l:'80 分以上',c:leads.filter(x=>x.score>=80).length},{l:'60–79 分',c:leads.filter(x=>x.score>=60&&x.score<80).length},{l:'60 分以下',c:leads.filter(x=>x.score<60).length}],msc=Math.max(1,...sc.map(x=>x.c));scoreReport.innerHTML=reportRows(sc,msc,x=>x.l,x=>x.c,(x,v)=>v+' 筆');
+const f=[{l:'今日應追蹤',c:leads.filter(x=>needsFollow(x)&&isToday(x.nextFollowupAt)).length},{l:'逾期未追蹤',c:leads.filter(x=>needsFollow(x)&&isOverdue(x.nextFollowupAt)).length},{l:'未排追蹤日',c:leads.filter(x=>needsFollow(x)&&!x.nextFollowupAt).length}],mf=Math.max(1,...f.map(x=>x.c));followReport.innerHTML=reportRows(f,mf,x=>x.l,x=>x.c,(x,v)=>v+' 筆');
+}
+function exportCsv(){
+const rows=[['公司','城市','產業','AI分數','階段','預估金額','成交率','負責業務','預計成交日','下次追蹤','狀態']];leads.forEach(x=>rows.push([x.company,x.city,x.industry,x.score,stageText(x.stage),x.amount,x.probability,x.owner||'',dateOnly(x.expectedCloseDate),dateOnly(x.nextFollowupAt),statusText(x.status)]));
+const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\r\n'),blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='CRM商機報表_'+today()+'.csv';a.click();URL.revokeObjectURL(url);
+}
+function renderRules(){ruleHighScore.value=crmRules.highScore;ruleDueDays.value=crmRules.dueDays;ruleLargeAmount.value=crmRules.largeAmount;ruleDefaultProb.value=crmRules.defaultProb}
+function saveRules(){crmRules={highScore:Number(ruleHighScore.value||80),dueDays:Number(ruleDueDays.value||3),largeAmount:Number(ruleLargeAmount.value||1000000),defaultProb:Number(ruleDefaultProb.value||20)};localStorage.setItem('crm_rules',JSON.stringify(crmRules));render();toast('AI 規則已儲存')}
+function resetRules(){crmRules={...defaultRules};localStorage.setItem('crm_rules',JSON.stringify(crmRules));renderRules();render();toast('已恢復預設規則')}
+
+function openDealModal(id){const x=leads.find(v=>v.id===id);if(!x)return;dealLeadId.value=id;dealModalTitle.textContent='商機資料｜'+x.company;dealOwner.value=x.owner||'';dealStage.value=x.stage||'new';dealAmount.value=x.amount||0;dealProbability.value=x.probability||crmRules.defaultProb;dealCloseDate.value=dateOnly(x.expectedCloseDate);dealFollowDate.value=dateOnly(x.nextFollowupAt);dealNote.value=x.dealNote||'';dealModal.classList.remove('hidden')}
 function closeDealModal(){dealModal.classList.add('hidden')}
-dealForm.addEventListener('submit',async e=>{e.preventDefault();const id=Number(dealLeadId.value),x=leads.find(v=>v.id===id);const payload={owner:dealOwner.value.trim()||null,stage:dealStage.value,estimated_amount:Number(dealAmount.value||0),probability:Number(dealProbability.value||0),expected_close_date:dealCloseDate.value||null,next_followup_at:dealFollowDate.value||null,deal_note:dealNote.value.trim()||null};if(payload.stage==='won')payload.status='closed';const {error}=await db.from('leads').update(payload).eq('id',id);if(error){toast('商機儲存失敗：'+error.message);return}if(x){x.owner=payload.owner||'';x.stage=payload.stage;x.amount=payload.estimated_amount;x.probability=payload.probability;x.expectedCloseDate=payload.expected_close_date||'';x.nextFollowupAt=payload.next_followup_at||'';x.dealNote=payload.deal_note||'';if(payload.status)x.status=payload.status}closeDealModal();render();toast('商機資料已儲存')});
+dealForm.addEventListener('submit',async e=>{e.preventDefault();const id=Number(dealLeadId.value),x=leads.find(v=>v.id===id);const payload={owner:dealOwner.value.trim()||null,stage:dealStage.value,estimated_amount:Number(dealAmount.value||0),probability:Number(dealProbability.value||0),expected_close_date:dealCloseDate.value||null,next_followup_at:dealFollowDate.value||null,deal_note:dealNote.value.trim()||null};if(payload.stage==='won')payload.status='closed';const {error}=await db.from('leads').update(payload).eq('id',id);if(error){toast('商機儲存失敗：'+error.message);return}if(x){x.owner=payload.owner||'';x.stage=payload.stage;x.amount=payload.estimated_amount;x.probability=payload.probability;x.expectedCloseDate=payload.expected_close_date||'';x.nextFollowupAt=payload.next_followup_at||'';x.dealNote=payload.deal_note||'';if(payload.status)x.status=payload.status}closeDealModal();render();if(currentView==='assign')renderAssign();if(currentView==='pipeline')renderPipeline();if(currentView==='reports')renderReports();toast('商機資料已儲存')});
 dealModal.addEventListener('click',e=>{if(e.target===dealModal)closeDealModal()});
 
 async function updateLeadStatus(id,status){
@@ -294,10 +415,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeContactModal()
 
 loginForm.addEventListener('submit',async e=>{
 e.preventDefault();const email=loginEmail.value.trim(),password=loginPassword.value,errorBox=loginError,btn=loginBtn;errorBox.textContent='';btn.disabled=true;btn.textContent='登入中...';
-try{const {data,error}=await db.auth.signInWithPassword({email,password});if(error)throw error;currentUser=data.user;showApp();await loadLeads();changeView('all')}
+try{const {data,error}=await db.auth.signInWithPassword({email,password});if(error)throw error;currentUser=data.user;showApp();await loadLeads();changeView('dashboard')}
 catch(err){console.error(err);errorBox.textContent='登入失敗，請確認 Email 與密碼。'}finally{btn.disabled=false;btn.textContent='登入'}
 });
-async function init(){const {data,error}=await db.auth.getSession();if(error||!data.session?.user){showLogin();return}currentUser=data.session.user;showApp();await loadLeads();changeView('all')}
+async function init(){const {data,error}=await db.auth.getSession();if(error||!data.session?.user){showLogin();return}currentUser=data.session.user;showApp();await loadLeads();changeView('dashboard')}
 db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){currentUser=null;showLogin()}});
 init();
 </script>
