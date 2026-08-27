@@ -33,7 +33,18 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 .modal{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 30px 80px rgba(15,23,42,.25)}
 .modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}.modal-head h2{font-size:20px;margin:0}.modal-body{padding:20px}.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:16px 20px;border-top:1px solid var(--line)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.history{margin-top:22px;border-top:1px solid var(--line);padding-top:18px}.history h3{margin:0 0 12px}.log{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}.log-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:7px}.log-title{font-weight:800}.log-content{line-height:1.6;white-space:pre-wrap}.log-result{margin-top:8px;font-size:12px;color:#475569}
-@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.app{grid-template-columns:1fr}.sidebar{display:none}.topbar{align-items:flex-start;flex-direction:column}.grid2{grid-template-columns:1fr}}
+.dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.dashboard-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.dashboard-card .card-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dashboard-card .card-head h3{margin:0;font-size:16px}
+.follow-list{padding:8px 16px}
+.follow-item{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}
+.follow-item:last-child{border-bottom:0}
+.follow-item .name{font-weight:800}
+.follow-item .date{font-size:12px;color:#475569;white-space:nowrap}
+.badge-overdue{background:#fee2e2;color:#b91c1c;border-radius:999px;padding:4px 7px;font-size:11px;font-weight:800}
+.badge-today{background:#fff7ed;color:#c2410c;border-radius:999px;padding:4px 7px;font-size:11px;font-weight:800}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.dashboard-grid{grid-template-columns:1fr}.app{grid-template-columns:1fr}.sidebar{display:none}.topbar{align-items:flex-start;flex-direction:column}.grid2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -69,6 +80,17 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 <div class="actions"><span id="userEmail" class="user-badge"></span><button class="btn btn-light" onclick="loadLeads()">↻ 重新整理</button><button class="btn btn-light" onclick="logout()">登出</button></div>
 </div>
 <section class="kpis" id="kpis"></section>
+<section id="dashboardSummary" class="dashboard-grid hidden">
+<div class="dashboard-card">
+<div class="card-head"><h3>📌 今日應追蹤</h3><span id="todayCount" class="status pending">0 筆</span></div>
+<div id="todayFollowList" class="follow-list"><div class="empty">今天沒有需要追蹤的商機</div></div>
+</div>
+<div class="dashboard-card">
+<div class="card-head"><h3>⚠️ 逾期未追蹤</h3><span id="overdueCount" class="status hot">0 筆</span></div>
+<div id="overdueFollowList" class="follow-list"><div class="empty">目前沒有逾期追蹤</div></div>
+</div>
+</section>
+
 <section class="panel">
 <div class="panel-head">
 <h3 id="panelTitle">AI 開發名單</h3>
@@ -96,7 +118,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 <div class="field"><label>聯絡人</label><input id="contactPerson" placeholder="例如：王先生"></div>
 <div class="field"><label>電話</label><input id="contactPhone" placeholder="例如：04-xxxx-xxxx"></div>
 <div class="field"><label>Email</label><input id="contactEmail" type="email"></div>
-<div class="field"><label>聯繫結果</label><select id="contactResult"><option value="">請選擇</option><option value="尚未聯繫上">尚未聯繫上</option><option value="已聯繫，暫無需求">已聯繫，暫無需求</option><option value="有興趣，持續追蹤">有興趣，持續追蹤</option><option value="有明確需求">有明確需求</option><option value="已安排Demo">已安排 Demo</option><option value="不適合／排除">不適合／排除</option><option value="已結案">已結案</option></select></div>
+<div class="field"><label>聯繫結果</label><select id="contactResult"><option value="">請選擇</option><option value="尚未聯繫上">尚未聯繫上</option><option value="已聯繫，暫無需求">已聯繫，暫無需求</option><option value="有興趣，持續追蹤">有興趣，持續追蹤</option><option value="有明確需求">有明確需求</option><option value="已安排Demo">已安排 Demo</option><option value="不適合／排除">不適合／排除</option><option value="已簽約">已簽約</option><option value="已結案">已結案</option></select></div>
 </div>
 <div class="field"><label>聯繫內容 *</label><textarea id="contactContent" placeholder="例如：目前使用既有 ERP 約 10 年，近期評估生管與 API 串接..." required></textarea></div>
 <div class="field"><label>下次追蹤日期</label><input id="nextFollowupAt" type="date"></div>
@@ -115,7 +137,7 @@ const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let leads=[],currentUser=null,currentView='all';
 
 const viewConfig={
-dashboard:{title:'首頁儀表板',subtitle:'快速掌握目前 AI 開發名單與商機進度。',panel:'全部商機概況',status:''},
+dashboard:{title:'首頁儀表板',subtitle:'快速掌握今日應追蹤、逾期未追蹤與有效商機。',panel:'全部商機概況',status:''},
 all:{title:'AI 名單中心',subtitle:'AI 匯入與人工審核的開發名單中心。',panel:'AI 開發名單',status:''},
 waiting:{title:'待聯繫名單',subtitle:'已確認值得開發，等待業務人員聯絡的公司。',panel:'待聯繫名單',status:'waiting'},
 hot:{title:'有效商機',subtitle:'已確認有明確需求或具高度成交可能性的商機。',panel:'有效商機',status:'hot'},
@@ -131,6 +153,13 @@ function statusText(s){return({pending:'AI 待審核',waiting:'待聯繫',contac
 function suggestionFor(x){const t=x.types||[];if(t.some(v=>v.includes('MES')))return'建議先確認現有 ERP、生管流程與 MES 串接需求。';if(t.some(v=>v.includes('API')))return'建議先確認目前使用的平台、API 開放狀況及希望自動化的流程。';if(t.some(v=>v.includes('戰情室')||v.includes('AI')))return'建議切入管理報表、即時資訊與 AI 應用情境。';if(t.some(v=>v.includes('ERP')))return'建議先確認現有 ERP 使用年限、痛點及是否有汰換規劃。';return'建議先電話確認目前資訊系統現況與近期數位化計畫。'}
 function mapRow(r){return{id:r.id,company:r.company_name||'',city:r.city||'',industry:r.industry||'',types:parseTypes(r.opportunity_type),score:Number(r.ai_score||0),reason:r.ai_reason||'',source:r.source||'',sourceUrl:r.source_url||'',status:normalizeStatus(r.status),owner:r.owner||'',nextFollowupAt:r.next_followup_at||'',closeReason:r.close_reason||''}}
 function today(){return new Date().toLocaleDateString('en-CA')}
+function dateOnly(v){return v?String(v).slice(0,10):''}
+function isToday(v){return dateOnly(v)===today()}
+function isOverdue(v){
+const d=dateOnly(v);return !!d && d<today();
+}
+function needsFollow(x){return ['waiting','contacted','hot','follow'].includes(x.status) && !!x.nextFollowupAt}
+
 
 async function loadLeads(){
 if(!currentUser)return;
@@ -144,7 +173,9 @@ function changeView(view){
 currentView=view;const cfg=viewConfig[view]||viewConfig.all;
 pageTitle.textContent=cfg.title;pageSubtitle.textContent=cfg.subtitle;panelTitle.textContent=cfg.panel;
 document.querySelectorAll('.nav-item[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));
-statusFilter.value=cfg.status||'';render();
+statusFilter.value=cfg.status||'';
+dashboardSummary.classList.toggle('hidden',view!=='dashboard');
+render();
 }
 
 function actionButtons(x){
@@ -159,7 +190,23 @@ if(x.status==='rejected')return `<button class="btn btn-light" onclick="updateLe
 return contact;
 }
 
+function renderDashboardSummary(){
+const todayItems=leads.filter(x=>needsFollow(x)&&isToday(x.nextFollowupAt)).sort((a,b)=>b.score-a.score);
+const overdueItems=leads.filter(x=>needsFollow(x)&&isOverdue(x.nextFollowupAt)).sort((a,b)=>dateOnly(a.nextFollowupAt).localeCompare(dateOnly(b.nextFollowupAt)));
+todayCount.textContent=`${todayItems.length} 筆`;
+overdueCount.textContent=`${overdueItems.length} 筆`;
+todayFollowList.innerHTML=todayItems.length?todayItems.map(x=>`<div class="follow-item">
+<div><div class="name">${esc(x.company)}</div><div class="meta">${esc(x.city)}｜${esc(x.industry)}｜AI ${x.score} 分</div></div>
+<div><span class="badge-today">今天</span> <button class="btn btn-primary" onclick="openContactModal(${x.id})">聯繫</button></div>
+</div>`).join(''):'<div class="empty">今天沒有需要追蹤的商機</div>';
+overdueFollowList.innerHTML=overdueItems.length?overdueItems.map(x=>`<div class="follow-item">
+<div><div class="name">${esc(x.company)}</div><div class="meta">${esc(x.city)}｜${esc(x.industry)}｜AI ${x.score} 分</div></div>
+<div><span class="badge-overdue">${esc(dateOnly(x.nextFollowupAt))}</span> <button class="btn btn-primary" onclick="openContactModal(${x.id})">立即聯繫</button></div>
+</div>`).join(''):'<div class="empty">目前沒有逾期追蹤</div>';
+}
+
 function render(){
+renderDashboardSummary();
 const q=search.value.trim().toLowerCase(),type=typeFilter.value,minScore=Number(scoreFilter.value||0),st=statusFilter.value,cfg=viewConfig[currentView]||viewConfig.all;
 const rows=leads.filter(x=>(!q||x.company.toLowerCase().includes(q))&&(!type||x.types.includes(type))&&x.score>=minScore&&(!st||x.status===st)&&(!cfg.status||x.status===cfg.status)).sort((a,b)=>b.score-a.score);
 tbody.innerHTML=rows.length?rows.map(x=>`<tr>
@@ -172,7 +219,12 @@ tbody.innerHTML=rows.length?rows.map(x=>`<tr>
 <td><span class="status ${x.status}">${statusText(x.status)}</span></td>
 <td><div class="row-actions">${actionButtons(x)}</div></td></tr>`).join(''):'<tr><td colspan="8"><div class="empty">目前沒有符合條件的名單</div></td></tr>';
 const total=leads.length,pending=leads.filter(x=>x.status==='pending').length,waiting=leads.filter(x=>x.status==='waiting').length,hot=leads.filter(x=>x.status==='hot').length,follow=leads.filter(x=>x.status==='follow').length,closed=leads.filter(x=>x.status==='closed').length;
-let data=[['AI 匯入總數',total],['待審核',pending],['待聯繫',waiting],['有效商機',hot],['待追蹤',follow]];if(currentView==='closed')data[4]=['已結案',closed];
+const todayDue=leads.filter(x=>needsFollow(x)&&isToday(x.nextFollowupAt)).length;
+const overdue=leads.filter(x=>needsFollow(x)&&isOverdue(x.nextFollowupAt)).length;
+let data=currentView==='dashboard'
+?[['AI 匯入總數',total],['今日應追蹤',todayDue],['逾期未追蹤',overdue],['有效商機',hot],['待追蹤',follow]]
+:[['AI 匯入總數',total],['待審核',pending],['待聯繫',waiting],['有效商機',hot],['待追蹤',follow]];
+if(currentView==='closed')data[4]=['已結案',closed];
 kpis.innerHTML=data.map(([a,b])=>`<div class="kpi"><div class="label">${a}</div><div class="num">${b}</div></div>`).join('');
 }
 
@@ -205,7 +257,7 @@ ${log.next_followup_at?`<div class="log-result"><b>下次追蹤：</b>${esc(log.
 function resultToStatus(result,nextDate,current){
 if(result==='有明確需求'||result==='已安排Demo')return'hot';
 if(result==='不適合／排除')return'rejected';
-if(result==='已結案')return'closed';
+if(result==='已簽約'||result==='已結案')return'closed';
 if(nextDate||result==='有興趣，持續追蹤'||result==='已聯繫，暫無需求'||result==='尚未聯繫上')return'follow';
 return current==='waiting'?'contacted':current;
 }
