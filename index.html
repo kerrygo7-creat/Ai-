@@ -51,12 +51,16 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 /* ===== CRM V1 完整管理功能 ===== */
 .mgmt-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--line);background:#f8fafc}
 .mgmt-toolbar input,.mgmt-toolbar select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#fff}
-.pipeline-board{display:grid;grid-template-columns:repeat(7,minmax(210px,1fr));gap:12px;overflow-x:auto;padding:16px}
-.pipe-col{background:#f8fafc;border:1px solid var(--line);border-radius:14px;min-height:220px}
-.pipe-head{padding:12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;font-weight:800}
-.pipe-sum{font-size:11px;color:var(--muted);margin-top:3px}.pipe-body{padding:10px}
-.deal-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:9px;box-shadow:0 3px 10px rgba(15,23,42,.04);cursor:pointer}
-.deal-card:hover{border-color:#93c5fd}.deal-card[draggable="true"]{cursor:grab}.deal-card.dragging{opacity:.45}.pipe-col.drag-over{outline:2px dashed #2563eb;outline-offset:-4px;background:#eff6ff}.lost-reason{margin-top:7px;padding:7px 8px;border-radius:8px;background:#f1f5f9;color:#475569;font-size:11px}.deal-name{font-weight:800}.deal-detail{font-size:11px;color:var(--muted);line-height:1.55;margin-top:5px}
+.pipeline-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;padding:14px;overflow:visible}
+.pipe-col{background:#f8fafc;border:1px solid var(--line);border-radius:14px;min-height:260px;min-width:0}
+.pipe-head{padding:11px 10px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;font-weight:800;align-items:flex-start}
+.pipe-head>div:first-child{min-width:0}.pipe-head span{flex:0 0 auto}
+.pipe-sum{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pipe-body{padding:8px}
+.deal-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;box-shadow:0 3px 10px rgba(15,23,42,.04);cursor:pointer;min-width:0}
+.deal-card:hover{border-color:#93c5fd}.deal-card[draggable="true"]{cursor:grab}.deal-card.dragging{opacity:.45}.pipe-col.drag-over{outline:2px dashed #2563eb;outline-offset:-4px;background:#eff6ff}.lost-reason{margin-top:7px;padding:7px 8px;border-radius:8px;background:#f1f5f9;color:#475569;font-size:11px}.deal-name{font-weight:800;font-size:13px;line-height:1.4;word-break:break-word}.deal-detail{font-size:10px;color:var(--muted);line-height:1.5;margin-top:6px;word-break:break-word}.deal-metrics{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:7px}.deal-metric{background:#f8fafc;border-radius:8px;padding:6px}.deal-metric span{display:block;font-size:9px;color:var(--muted)}.deal-metric b{display:block;font-size:11px;margin-top:2px}.deal-footer{font-size:10px;color:var(--muted);margin-top:7px;line-height:1.45}
+@media(max-width:1500px){.pipeline-board{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:1100px){.pipeline-board{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.pipeline-board{grid-template-columns:1fr}}
 .report-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 .report-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px}.report-card h3{margin:0 0 12px}
 .report-row{display:grid;grid-template-columns:minmax(90px,150px) 1fr 95px;gap:10px;align-items:center;margin:10px 0;font-size:12px}
@@ -261,30 +265,7 @@ function scoreClass(s){return Number(s||0)>=80?'high':Number(s||0)>=60?'mid':'lo
 function normalizeStatus(s){return s==='accepted'?'waiting':(s||'pending')}
 function statusText(s){return({pending:'AI 待審核',waiting:'待聯繫',contacted:'已接觸',hot:'有需求',follow:'待追蹤',closed:'已結案',rejected:'已排除'})[normalizeStatus(s)]||s}
 function suggestionFor(x){const t=x.types||[];if(t.some(v=>v.includes('MES')))return'建議先確認現有 ERP、生管流程與 MES 串接需求。';if(t.some(v=>v.includes('API')))return'建議先確認目前使用的平台、API 開放狀況及希望自動化的流程。';if(t.some(v=>v.includes('戰情室')||v.includes('AI')))return'建議切入管理報表、即時資訊與 AI 應用情境。';if(t.some(v=>v.includes('ERP')))return'建議先確認現有 ERP 使用年限、痛點及是否有汰換規劃。';return'建議先電話確認目前資訊系統現況與近期數位化計畫。'}
-function normalizeMoney(v){
-  const n=Number(String(v??0).replace(/[,\s]/g,''));
-  if(!Number.isFinite(n))return 0;
-  // 修正歷史資料曾被誤放大 10 倍的情況：
-  // 若 estimated_amount 與 budget 恰為 10 倍關係，以 budget 為可信基準。
-  return n;
-}
-function mapRow(r){
-  const rawAmount=normalizeMoney(r.estimated_amount);
-  const budget=normalizeMoney(r.budget);
-  const amount=(budget>0 && rawAmount===budget*10)?budget:rawAmount;
-  return{
-    id:r.id,company:r.company_name||'',city:r.city||'',industry:r.industry||'',
-    types:parseTypes(r.opportunity_type),score:Number(r.ai_score||0),reason:r.ai_reason||'',
-    source:r.source||'',sourceUrl:r.source_url||'',status:normalizeStatus(r.status),
-    owner:r.owner||'',nextFollowupAt:r.next_followup_at||'',closeReason:r.close_reason||'',
-    stage:r.stage||'new',amount,probability:Number(r.probability||0),
-    expectedCloseDate:r.expected_close_date||'',dealNote:r.deal_note||'',
-    contactName:r.contact_name||'',contactTitle:r.contact_title||'',contactPhone:r.contact_phone||'',
-    contactEmail:r.contact_email||'',leadSource:r.lead_source||'',competitor:r.competitor||'',
-    budget,decisionMaker:r.decision_maker||'',requiredModules:r.required_modules||'',
-    nextAction:r.next_action||'',aiSummary:r.ai_summary||'',lastContactAt:r.last_contact_at||''
-  }
-}
+function mapRow(r){return{id:r.id,company:r.company_name||'',city:r.city||'',industry:r.industry||'',types:parseTypes(r.opportunity_type),score:Number(r.ai_score||0),reason:r.ai_reason||'',source:r.source||'',sourceUrl:r.source_url||'',status:normalizeStatus(r.status),owner:r.owner||'',nextFollowupAt:r.next_followup_at||'',closeReason:r.close_reason||'',stage:r.stage||'new',amount:Number(r.estimated_amount||0),probability:Number(r.probability||0),expectedCloseDate:r.expected_close_date||'',dealNote:r.deal_note||''}}
 const stageNames={new:'新名單',qualified:'需求確認',demo:'Demo / 提案',quote:'報價',negotiation:'議價',won:'成交',lost:'失單'};
 const stageText=s=>stageNames[s]||'新名單';
 const money=v=>'NT$ '+Number(v||0).toLocaleString('zh-TW');
@@ -393,7 +374,17 @@ selectedLeadIds.clear();assignOwner.value='';assignStage.value='';render();rende
 }
 function renderPipeline(){
 refreshOwnerOptions();const owner=pipelineOwner.value,stages=['new','qualified','demo','quote','negotiation','won','lost'];
-pipelineBoard.innerHTML=stages.map(st=>{const arr=leads.filter(x=>x.stage===st&&(!owner||x.owner===owner)),total=arr.reduce((s,x)=>s+(x.amount||0),0);return `<div class="pipe-col" data-stage="${st}" ondragover="pipelineDragOver(event)" ondragleave="pipelineDragLeave(event)" ondrop="pipelineDrop(event,'${st}')"><div class="pipe-head"><div>${stageText(st)}<div class="pipe-sum">${money(total)}</div></div><span>${arr.length}</span></div><div class="pipe-body">${arr.length?arr.sort((a,b)=>b.amount-a.amount).map(x=>`<div class="deal-card" draggable="true" data-id="${x.id}" ondragstart="pipelineDragStart(event,${x.id})" ondragend="pipelineDragEnd(event)" onclick="openDealModal(${x.id})"><div class="deal-name">${esc(x.company)}</div><div class="deal-detail">${money(x.amount)}｜${x.probability}%｜加權 ${money(weightedAmount(x))}<br>${x.owner?esc(x.owner):'未指派'}${x.expectedCloseDate?'<br>預計成交：'+esc(dateOnly(x.expectedCloseDate)):''}</div>${st==='lost'&&x.closeReason?`<div class="lost-reason">失單原因：${esc(x.closeReason)}</div>`:''}</div>`).join(''):'<div class="empty">無商機</div>'}</div></div>`}).join('');
+pipelineBoard.innerHTML=stages.map(st=>{const arr=leads.filter(x=>x.stage===st&&(!owner||x.owner===owner)),total=arr.reduce((s,x)=>s+(x.amount||0),0);return `<div class="pipe-col" data-stage="${st}" ondragover="pipelineDragOver(event)" ondragleave="pipelineDragLeave(event)" ondrop="pipelineDrop(event,'${st}')"><div class="pipe-head"><div>${stageText(st)}<div class="pipe-sum">${money(total)}</div></div><span>${arr.length}</span></div><div class="pipe-body">${arr.length?arr.sort((a,b)=>b.amount-a.amount).map(x=>`<div class="deal-card" draggable="true" data-id="${x.id}" ondragstart="pipelineDragStart(event,${x.id})" ondragend="pipelineDragEnd(event)" onclick="openDealModal(${x.id})">
+<div class="deal-name">${esc(x.company)}</div>
+<div class="deal-metrics">
+  <div class="deal-metric"><span>預估金額</span><b>${money(x.amount)}</b></div>
+  <div class="deal-metric"><span>成交率</span><b>${x.probability}%</b></div>
+  <div class="deal-metric"><span>加權預估</span><b>${money(weightedAmount(x))}</b></div>
+  <div class="deal-metric"><span>AI 分數</span><b>${x.score}</b></div>
+</div>
+<div class="deal-footer">${x.owner?esc(x.owner):'未指派'}${x.expectedCloseDate?'<br>預計成交：'+esc(dateOnly(x.expectedCloseDate)):''}</div>
+${st==='lost'&&x.closeReason?`<div class="lost-reason">失單原因：${esc(x.closeReason)}</div>`:''}
+</div>`).join(''):'<div class="empty">無商機</div>'}</div></div>`}).join('');
 }
 let draggingLeadId=null;
 function pipelineDragStart(e,id){draggingLeadId=id;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(id))}
